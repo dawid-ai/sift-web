@@ -1,0 +1,3540 @@
+/* ============================================================================
+   Sift — website stylesheet.
+
+   Everything here reads from assets/tokens.css. If a value is a colour and it
+   isn't hsl(var(--token)), it is a bug.
+
+   Inherited law, repeated here because it is the easiest thing to break:
+     - CORAL (--primary) is spent on exactly two things: the primary CTA and an
+       active/selected state. Never decoration, never a heading, never a border.
+     - --accent-muted is what decoration gets: eyebrow rules, list marks, the mark.
+     - VIOLET (--ai) means AI and only AI.
+     - Surfaces separate with HAIRLINES, not shadows.
+     - Radii: controls 8px (--r-control), cards 12px (--r-card), thumbs 6px.
+
+   Order: 1 tokens · 2 reset · 3 type · 4 layout · 5 nav · 6 buttons ·
+          7 sections · 8 components · 9 footer · 10 responsive/motion
+   ============================================================================ */
+
+/* --- 1. LOCAL TOKENS ------------------------------------------------------ */
+
+:root {
+  /* Space scale — 4px base, geometric enough to stay a rhythm and not a soup. */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 2.75rem;
+  --sp-8: 3.5rem;
+  --sp-9: 4.5rem;
+  --sp-10: 6rem;
+
+  /* Vertical rhythm between sections. THREE WEIGHTS, and only three — every
+     section used to take the identical 120px top and bottom, which over 26,000px
+     is one unvarying beat fourteen times over and reads as a stack rather than
+     as an argument with a shape.
+
+       --section-y        the default measure
+       --section-y-major  a chapter opening: the artifact and the slides, the
+                          two sections the page is actually built around
+       --section-y-tight  a section that continues the one above it rather than
+                          starting something (transcription, channels, on-disk,
+                          the author)
+
+     A section's own top padding is exposed as --pad-top so the hairline above it
+     can track it; nothing else may invent a gap. */
+  --section-y: clamp(4rem, 9vw, 7.5rem);
+  --section-y-major: clamp(5rem, 12vw, 10rem);
+  --section-y-tight: clamp(2.75rem, 5.5vw, 4.5rem);
+  --gutter: clamp(1.25rem, 5vw, 2.5rem);
+  --wrap: 74rem; /* 1184px */
+  --wrap-narrow: 46rem;
+
+  /* THE TEXT COLUMN. One measure, used by every block of running prose on the
+     page, and one card width that is the same measure plus its own padding — so
+     a paragraph inside a card and a paragraph on the ground have the same left
+     and right edges. Before this the page resolved to five unexplained widths
+     (68ch prose, 72ch microcopy, 74rem install cards, 58rem FAQ, 60ch lede) and
+     the right edge of the page moved four times in the last third of the scroll. */
+  --measure: 46rem;
+  --measure-small: 62ch; /* running text below --t-lede; see .prose */
+  --measure-card: 49rem; /* --measure + var(--sp-5) * 2 */
+
+  /* THE RAIL. Above 78rem the page is a two-column editorial grid: a left
+     margin column that carries section labels and nothing else, and the content
+     column beside it. Figures (screenshots, the artifact, the chain, the
+     comparison table) bleed back across both. Set to 0 below that breakpoint,
+     where there is no room for a margin column. */
+  --rail-w: 11rem;
+  --rail-gap: var(--sp-7);
+  --rail-indent: 0px;
+
+  /* Type scale. Fluid across 360 -> 1440.
+
+     --t-small and --t-micro are deliberately NOT fluid. Both used to shrink at
+     the small end — 13px and 12px at 360px wide — and the small end is exactly
+     where a reader can least afford it: --t-small carries real body copy (card
+     text, table cells, list items, footer links) and --t-micro carries the
+     uppercase labels. Both now sit ON the 14px floor at every width.
+
+     They stay separate tokens because they are separate roles, and --t-micro is
+     the one that would move first if the floor ever changed. The one place
+     --t-micro was doing sub-copy rather than labelling (.th-sub) has been moved
+     up to --t-small. Nothing on this page renders text below 14px at any width;
+     web/tools/audit.cjs measures that at seven widths and fails if it slips. */
+  --t-micro: 0.875rem; /* 14px — uppercase micro-labels */
+  --t-small: 0.875rem; /* 14px — the floor for anything read as prose */
+  --t-body: clamp(0.9375rem, 0.9rem + 0.19vw, 1.0625rem);
+  --t-lede: clamp(1.0625rem, 0.98rem + 0.38vw, 1.3125rem);
+  --t-h3: clamp(1.0625rem, 1rem + 0.28vw, 1.25rem);
+  --t-h2: clamp(1.75rem, 1.28rem + 2.05vw, 3rem);
+  --t-h1: clamp(2.25rem, 1.42rem + 3.65vw, 4.25rem);
+  --t-stat: clamp(2rem, 1.5rem + 2.2vw, 3.25rem);
+
+  --nav-h: 3.5rem;
+
+  /* Hairline, used everywhere a surface has to separate from another. */
+  --hair: 1px solid hsl(var(--border));
+
+  /* Distance from the right edge of .wrap's content box to the right edge of
+     the viewport. A figure inside .wrap that carries `margin-right:
+     calc(var(--bleed-right) * -1)` runs exactly to the viewport edge. */
+  --bleed-right: calc(
+    (100vw - min(100vw, var(--wrap) + var(--gutter) * 2)) / 2 + var(--gutter)
+  );
+
+  /* A screenshot is a window sitting ON the page, not a card printed into it.
+     The page's law is hairlines, not drop shadows, and this obeys it: the top
+     line is the same 1px inset highlight the app puts on translucent controls,
+     and what is under it is not a card shadow but the ground going dark —
+     one very wide, very soft, almost-black pool with no visible edge. */
+  --lift:
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.06), 0 1px 2px 0 hsl(20 30% 1% / 0.55),
+    0 32px 64px -34px hsl(20 30% 1% / 0.95);
+
+  /* --- MOTION ------------------------------------------------------------
+     One easing curve for arrival and one for interface response, so the page
+     has an accent rather than a grab-bag. --ease-arrive decelerates hard and
+     never overshoots: content should look like it was PLACED, not thrown.  */
+  --ease-arrive: cubic-bezier(0.22, 0.68, 0.28, 1);
+  --ease-out: cubic-bezier(0.25, 0.7, 0.35, 1);
+
+  --rv-dur: 480ms; /* text and small blocks       */
+  --rv-dur-big: 600ms; /* figures — heavier, so slower */
+  --rv-rise: 12px; /* short. A long slide reads as a template.        */
+  --rv-rise-big: 18px;
+}
+
+/* --- 2. RESET ------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  background-color: hsl(var(--background));
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-body);
+  line-height: 1.65;
+  color: hsl(var(--muted-foreground));
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* belt and braces: nothing may scroll the page sideways */
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+figure,
+blockquote,
+ul,
+ol,
+dl {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+}
+
+/* Mono runs optically larger than Inter at the same px, hence the <1em ratio.
+   max() puts a hard floor under it: inside a 14px card the bare 0.9em landed
+   at 12.6px, which is below anything else on the page. */
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: max(0.9em, 0.875rem);
+  font-weight: 450;
+  color: hsl(var(--fg-secondary));
+}
+
+table {
+  border-collapse: collapse;
+}
+
+/* Focus is a STATE, which is the second of the two things coral is spent on.
+   It is deliberately loud: a 2px ring plus a soft halo, so it is unmissable on
+   a dark ground without needing a second colour. */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.btn:focus-visible,
+.link-cta:focus-visible,
+.nav-links a:focus-visible,
+.nav-logo:focus-visible,
+.faq summary:focus-visible,
+.link-row a:focus-visible,
+.after-link a:focus-visible,
+.author-link a:focus-visible,
+.footer-col a:focus-visible {
+  box-shadow: 0 0 0 5px hsl(var(--primary) / 0.16);
+}
+/* The one exception. A coral ring around a coral button is a ring you have to
+   look for, so the CTA's own ring goes to --foreground and the coral stays as
+   the halo behind it. Two-tone, and unmissable at a glance. */
+.btn-primary:focus-visible {
+  outline-color: hsl(var(--foreground));
+  box-shadow:
+    inset 0 1px 0 0 hsl(0 0% 100% / 0.18),
+    0 0 0 6px hsl(var(--primary) / 0.32);
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.28);
+  color: hsl(var(--foreground));
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -4rem;
+  z-index: 100;
+  padding: 0.7rem var(--sp-4);
+  background: hsl(var(--surface));
+  border: var(--hair);
+  border-radius: var(--r-control);
+  color: hsl(var(--foreground));
+  /* Parked by transform, not by `top`. The page commits to touching only opacity
+     and transform, and animating `top` forces a layout pass per frame on the
+     first control a keyboard reader ever meets. */
+  top: calc(var(--nav-h) + 0.5rem);
+  transform: translateY(calc(-100% - var(--nav-h) - 1.5rem));
+  transition: transform 0.15s ease;
+}
+/* :focus, not :focus-visible. A skip link is reached by Tab and by nothing else,
+   and :focus-visible is a heuristic — if any engine or any input path decides
+   this focus is not "visible", the link stays parked at -4rem and the first
+   thing a keyboard reader meets is a control they cannot see. The one case
+   where the two selectors can disagree is the one case that matters here. */
+.skip-link:focus {
+  transform: none;
+}
+
+/* --- 3. TYPE -------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4 {
+  color: hsl(var(--foreground));
+  font-weight: 640;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--t-h1);
+  font-weight: 680;
+  letter-spacing: -0.035em;
+  line-height: 1.03;
+}
+
+h2 {
+  font-size: var(--t-h2);
+  letter-spacing: -0.03em;
+}
+
+h3,
+h4 {
+  font-size: var(--t-h3);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+/* Hand-set headline breaks. text-wrap: balance picks syntactically wrong ones —
+   it stranded "the" and "and" at the end of two of the H1's four lines — so the
+   six headlines that wrap carry an explicit break, and balance stays on as the
+   fallback for the widths where the explicit break would be wrong. */
+.br-lg {
+  display: none;
+}
+@media (min-width: 56rem) {
+  .br-lg {
+    display: inline;
+  }
+}
+
+p {
+  text-wrap: pretty;
+}
+
+strong,
+b {
+  color: hsl(var(--fg-secondary));
+  font-weight: 600;
+}
+
+/* Eyebrow — micro-label above a heading. Text on --fg-subtle, with a short
+   decorative rule in --accent-muted. Decoration is never coral. */
+.eyebrow {
+  display: flex;
+  /* flex-start, not center: the rule belongs to the FIRST line. With
+     align-items:center a two-line label pushed the rule down to the centre of
+     the whole block, where it reads as a stray dash floating beside a
+     paragraph rather than as a rule leading into a label. The labels
+     themselves are short enough not to wrap at any supported width — this is
+     the guard, not the fix. */
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  font-size: var(--t-micro);
+  font-weight: 620;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--fg-subtle));
+}
+.eyebrow::before {
+  content: "";
+  flex: none;
+  width: 1.75rem;
+  height: 1px;
+  /* Optical centre of the first line. 0.7em is the fallback for browsers
+     without lh units; the calc() wins where 1lh resolves. */
+  margin-top: 0.7em;
+  margin-top: calc((1lh - 1px) / 2);
+  background: hsl(var(--accent-muted));
+}
+/* Violet means AI, and only AI. Two sections qualify: transcripts and summaries. */
+.eyebrow-ai::before {
+  background: hsl(var(--ai));
+}
+
+.lede {
+  font-size: var(--t-lede);
+  line-height: 1.55;
+  color: hsl(var(--muted-foreground));
+  max-width: var(--measure);
+}
+
+/* SMALL TYPE IS NOT LEDE TYPE. --measure is dimensioned for .lede: 736px at
+   21px is ~70ch, which is right. The same 736px at 17px is ~87ch, which is not
+   — a shorter line and a smaller face have to move together or the block reads
+   as a wall. --measure-small caps every 17px/14px running-text block on the
+   page to ~62ch, which lands them at roughly 660px: optically aligned with the
+   ledes above them rather than mechanically flush with them. .honest-note is
+   deliberately NOT in this list — it is a card, and its width law (--measure
+   plus its own padding) is documented at the rule itself. */
+.prose,
+.faq-body p,
+.platform-note,
+.note-caption {
+  max-width: var(--measure-small);
+}
+.prose p + p {
+  margin-top: var(--sp-4);
+}
+
+/* Captions and small print. --muted-foreground, NOT --fg-subtle: the design law
+   puts all body copy on the muted rung and reserves the subtle rung for eyebrows
+   and micro-labels, and every one of the seven .microcopy blocks on this page is
+   running sentences — the queue's self-updating paragraph, the slides app-data
+   line, the stored-account-details line. They were being set on the page's dimmest readable colour.
+
+   The margin is a DEFAULT, not an adjacency list. It used to be granted only to
+   `.cost-line + .microcopy`, which left two captions on the page (after the
+   slides honest-note, after the queue screenshot) with a measured 0px gap to the
+   block above — a caption flush against a window's bottom border reads as chrome
+   that escaped the frame. It is a caption in every one of its uses and none of
+   them wants zero. */
+.microcopy {
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+  max-width: var(--measure);
+}
+.section .microcopy {
+  margin-top: var(--sp-5);
+}
+
+/* --- 4. LAYOUT ------------------------------------------------------------ */
+
+.wrap {
+  width: 100%;
+  max-width: calc(var(--wrap) + var(--gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.wrap-narrow {
+  max-width: calc(var(--wrap-narrow) + var(--gutter) * 2);
+}
+
+.section {
+  position: relative;
+  --pad-top: var(--section-y);
+  --pad-bottom: var(--section-y);
+  padding-block: var(--pad-top) var(--pad-bottom);
+  scroll-margin-top: calc(var(--nav-h) + 1rem);
+}
+/* A chapter: more air above it than anything else on the page, and a tighter
+   bottom, so the section reads as opening rather than as continuing. */
+.section-major {
+  --pad-top: var(--section-y-major);
+  --pad-bottom: var(--section-y-tight);
+}
+.section-tight {
+  --pad-top: var(--section-y-tight);
+  --pad-bottom: var(--section-y-tight);
+}
+
+/* Hairlines are how sections separate. No shadows anywhere on this page. */
+.section + .section > .wrap::before {
+  content: "";
+  display: block;
+  height: 1px;
+  background: hsl(var(--border));
+  margin-top: calc(var(--pad-top) * -1);
+  margin-bottom: var(--pad-top);
+}
+/* …except where the section above already ended in a full-width figure. A rule
+   directly under a screenshot's own bottom edge is a second line doing the first
+   line's job — and except the closing band, which draws its own full-bleed
+   border-top.
+
+   THE SELECTORS MUST OUT-SPECIFY THE RULE ABOVE. Written as
+   `.section-no-rule > .wrap::before` these were (0,2,1) against the separator's
+   (0,3,1) and lost outright, so every section marked "no rule" still drew one —
+   and both grid-wrap sections (#story, #download) auto-placed the pseudo as a
+   GRID ITEM, which put an orphaned 176px / 595px stub in the middle of a column
+   instead of a rule at the top of the section. Matching the `.section +
+   .section` prefix takes them to (0,4,1) and the opt-outs work. */
+.section + .section.section-no-rule > .wrap::before,
+.section + .section.section-download > .wrap::before {
+  display: none;
+}
+
+.section-head {
+  max-width: 62ch;
+  margin-bottom: var(--sp-8);
+}
+.section-head .lede {
+  margin-top: var(--sp-5);
+}
+
+.subsection {
+  margin-top: var(--sp-9);
+  padding-top: var(--sp-8);
+  border-top: var(--hair);
+}
+
+.subhead {
+  font-size: clamp(1.25rem, 1.05rem + 0.9vw, 1.75rem);
+  letter-spacing: -0.025em;
+  margin-bottom: var(--sp-5);
+}
+.subhead-sm {
+  font-size: var(--t-h3);
+  margin-bottom: var(--sp-4);
+}
+
+/* --- 5. NAV --------------------------------------------------------------- */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: hsl(var(--rail) / 0.88);
+  border-bottom: var(--hair);
+  /* No saturate(). The app refuses backdrop-filter outright in three places
+     (library/media-card.tsx, library/transcript-panel.tsx, ui/confirm-dialog.tsx)
+     and the one survivor is a plain blur with no saturation. On a page whose
+     colour law is "one saturated hue, spent on action only", a bar that pushes
+     the saturation of whatever scrolls under it by 40% is a filter working
+     against the palette — and at 0.88 alpha only ~12% of those pixels show
+     through, so it was buying almost nothing for a full-width composited
+     repaint per scroll frame. */
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+/* Off the top of the page the bar firms up: the rail goes opaque and the
+   hairline under it strengthens. Still a hairline — never a drop shadow. */
+.nav[data-scrolled="true"] {
+  background: hsl(var(--rail) / 0.96);
+  border-bottom-color: hsl(var(--border-strong));
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  height: var(--nav-h);
+  width: 100%;
+  max-width: calc(var(--wrap) + var(--gutter) * 2);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* The wordmark is a link home, and it was a 26x28 target. Padding grows the
+   hit box; the negative margin puts the mark back on the gutter line. The
+   corner-mark brackets hang off the inner span, so they do not move. */
+.nav-logo {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-inline: 0.6rem;
+  margin-inline: -0.6rem;
+}
+
+.nav-wordmark {
+  font-size: 1.0625rem;
+  font-weight: 660;
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+}
+
+/* The no-JS state is the VISIBLE one. This used to be display:none in the base
+   rule, with the replacement panel scoped to `.js` and the toggle scoped to `.js`
+   too — so a phone with JavaScript switched off got a bar holding a wordmark and
+   a Download button, no navigation at all, and no affordance saying anything was
+   missing. main.js's own contract is that everything reads and navigates with JS
+   off. Below 56rem the links now wrap to a second row of the bar, which is uglier
+   than a panel and is usable; `.js` takes that back and hands over to the panel. */
+.nav-links {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: center;
+  /* The anchors carry 0.6rem of inline padding each for their hit box, so most
+     of the old gap now lives inside them. What is left keeps the optical
+     spacing between words where it was. */
+  gap: clamp(0.125rem, 0.5vw, 0.4rem);
+  font-size: var(--t-small);
+}
+/* 44px tall even in the horizontal bar: the anchors are the page's only
+   navigation, and a 33px hit box was the smallest target on the page. The
+   text stays optically centred because the box grows symmetrically around it. */
+.nav-links a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 44x44 minimum. "FAQ" is 27px of text, so the width has to come from
+     padding — and the indicator rule below is inset by the same amount so it
+     still hugs the word rather than the hit box. */
+  min-height: 2.75rem;
+  padding-inline: 0.6rem;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+/* The indicator rule is drawn at full width and revealed by scaling it, so
+   hovering a nav item never touches layout. */
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  /* Sits just under the text rather than at the foot of the 44px box. */
+  bottom: 0.65rem;
+  height: 1px;
+  background: hsl(var(--fg-subtle));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition:
+    transform 0.24s var(--ease-out),
+    background-color 0.18s ease;
+}
+.nav-links a:hover {
+  color: hsl(var(--foreground));
+}
+.nav-links a:hover::after {
+  transform: scaleX(1);
+}
+/* Active/selected state — one of the two things coral is allowed to do. The
+   WORD, though, takes --foreground: two coral objects in the same 80px header
+   band (the CTA and the active anchor set in coral) meant the CTA was no longer
+   the only coral thing above the fold. The state is now carried by a 1px rule,
+   which is the smallest amount of coral that still says "you are here". */
+.nav-links a[aria-current="true"] {
+  color: hsl(var(--foreground));
+}
+.nav-links a[aria-current="true"]::after {
+  background: hsl(var(--primary));
+  transform: scaleX(1);
+}
+
+.nav-cta {
+  flex: none;
+  margin-left: auto;
+}
+
+.nav-toggle {
+  flex: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  /* 44px. The bar is 56px tall, so the whole hit area fits inside it with room
+     to spare, and this is the control a one-handed reader aims at first. */
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--hair);
+  border-radius: var(--r-control);
+  background: hsl(var(--surface));
+  cursor: pointer;
+}
+.js .nav-toggle {
+  display: inline-flex;
+}
+.nav-toggle:hover {
+  border-color: hsl(var(--border-strong));
+}
+.nav-toggle-bars,
+.nav-toggle-bars::before,
+.nav-toggle-bars::after {
+  display: block;
+  width: 15px;
+  height: 1.5px;
+  background: hsl(var(--fg-secondary));
+  border-radius: 2px;
+}
+.nav-toggle-bars {
+  position: relative;
+  transition: background-color 0.16s ease;
+}
+.nav-toggle-bars::before,
+.nav-toggle-bars::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  transition: transform 0.22s var(--ease-out);
+}
+.nav-toggle-bars::before {
+  top: -5px;
+}
+.nav-toggle-bars::after {
+  top: 5px;
+}
+/* Open → the two outer bars travel to the middle and cross. Transform only:
+   the bars' `top` never changes, so nothing reflows. */
+.nav-toggle[aria-expanded="true"] .nav-toggle-bars {
+  background-color: transparent;
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-bars::before {
+  transform: translateY(5px) rotate(45deg);
+}
+.nav-toggle[aria-expanded="true"] .nav-toggle-bars::after {
+  transform: translateY(-5px) rotate(-45deg);
+}
+
+/* --- 6. BUTTONS AND LINKS ------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  /* 44px floor on every button on the page, including .btn-sm in the nav and
+     the artifact's expand control, both of which were around 30px. */
+  min-height: 2.75rem;
+  padding: 0.7rem 1.15rem;
+  border-radius: var(--r-control);
+  font-size: var(--t-small);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+  cursor: pointer;
+  transition:
+    filter 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s var(--ease-out);
+}
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* The primary CTA. This and an active state are the only coral on the page.
+
+   The hover is the EMBER GLOW: the same lamp .app-canvas is lit by, only this
+   time behind the one control the page is actually asking you to press.
+
+   It lives on a pseudo-element whose OPACITY is what transitions, not the
+   button's own box-shadow — so the glow is a composited fade rather than a
+   repaint per frame, and the page keeps its "transform and opacity only" rule.
+   The pseudo has no background of its own and an outer shadow only paints
+   outside its border box, so it can never wash over the button's face. */
+.btn-primary {
+  position: relative;
+  background-image: linear-gradient(
+    180deg,
+    hsl(var(--primary-lit)),
+    hsl(var(--primary))
+  );
+  color: hsl(var(--primary-foreground));
+  box-shadow: inset 0 1px 0 0 hsl(0 0% 100% / 0.16);
+}
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.24s var(--ease-out);
+  box-shadow:
+    0 2px 10px -3px hsl(var(--primary) / 0.55),
+    0 12px 30px -12px hsl(var(--primary) / 0.7);
+}
+.btn-primary:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+.btn-primary:hover::after,
+.btn-primary:focus-visible::after {
+  opacity: 1;
+}
+.btn-primary:active {
+  filter: brightness(0.96);
+  transform: translateY(1px);
+}
+.btn-primary:active::after {
+  opacity: 0.45;
+}
+
+.btn-quiet {
+  background: hsl(var(--surface-2));
+  color: hsl(var(--fg-secondary));
+  border: var(--hair);
+}
+.btn-quiet:hover {
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border-strong));
+  background: hsl(var(--surface-2));
+  filter: brightness(1.14);
+}
+
+.btn-sm {
+  padding: 0.45rem 0.85rem;
+  font-size: var(--t-small);
+}
+
+.btn-lg {
+  padding: 0.95rem 1.75rem;
+  font-size: clamp(0.9375rem, 0.9rem + 0.19vw, 1.0625rem);
+}
+
+/* Secondary CTA: a text link carrying the same visual weight as a button label. */
+.link-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: hsl(var(--fg-secondary));
+  padding: 0.7rem 0;
+  transition: color 0.15s ease;
+}
+.link-cta::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.55rem;
+  height: 1px;
+  background: hsl(var(--accent-muted));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.26s var(--ease-out);
+}
+.link-cta:hover {
+  color: hsl(var(--foreground));
+}
+.link-cta:hover::after,
+.link-cta:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.prose a,
+.lede a,
+.faq-body a,
+.list-rider a,
+.microcopy a {
+  color: hsl(var(--fg-secondary));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--border-strong));
+  text-underline-offset: 0.2em;
+  transition: color 0.15s ease;
+}
+.prose a:hover,
+.lede a:hover,
+.faq-body a:hover {
+  color: hsl(var(--foreground));
+  text-decoration-color: hsl(var(--accent-muted));
+}
+
+.after-link {
+  margin-top: var(--sp-6);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+/* The page's four families of standalone "→" link. inline-block plus vertical
+   padding is what gets them to a 44px hit box without touching the line height
+   of the text around them — they are all their own line already, so the padding
+   costs nothing but the space it takes. */
+.after-link a,
+.author-link a,
+.link-row a,
+.footer-col a {
+  position: relative;
+  display: inline-block;
+  /* 44x44. The vertical padding does the height; the horizontal padding is
+     what gets a three-letter link like "FAQ" to 44 wide, and the matching
+     negative margin keeps the text flush with the column it sits in. */
+  padding-block: 0.7rem;
+  padding-inline: 0.6rem;
+  margin-inline: -0.6rem;
+  transition: color 0.15s ease;
+}
+.after-link a,
+.author-link a {
+  color: hsl(var(--fg-secondary));
+}
+/* One underline treatment for every "→" link on the page: a hairline that
+   grows from the left. Decoration, so --accent-muted, never coral. */
+.after-link a::after,
+.author-link a::after,
+.link-row a::after,
+.footer-col a::after {
+  content: "";
+  position: absolute;
+  left: 0.6rem;
+  right: 0.6rem;
+  /* Just under the text, not at the foot of the padded hit box. */
+  bottom: 0.55rem;
+  height: 1px;
+  background: hsl(var(--accent-muted));
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.26s var(--ease-out);
+}
+.after-link a:hover,
+.author-link a:hover {
+  color: hsl(var(--foreground));
+}
+.after-link a:hover::after,
+.author-link a:hover::after,
+.link-row a:hover::after,
+.footer-col a:hover::after {
+  transform: scaleX(1);
+}
+
+.author-link {
+  margin-top: var(--sp-6);
+  font-size: var(--t-lede);
+  font-weight: 600;
+}
+/* The one link on the page that has to look like a link at rest: it is the whole
+   of the "who made this" call to action, and set in --fg-secondary with a
+   hover-only rule it read as a heading. Rests at --border-strong, brightens to
+   the accent on hover like every other "→" link. */
+.author-link a::after {
+  transform: scaleX(1);
+  background: hsl(var(--border-strong));
+  transition:
+    background-color 0.2s ease,
+    transform 0.26s var(--ease-out);
+}
+.author-link a:hover::after {
+  background: hsl(var(--accent-muted));
+}
+
+/* 7.12 Who made this.
+   The section's right column used to be ~700px of nothing. UPDATES.md is what
+   the paragraph beside it points at, so UPDATES.md is what fills it. */
+.author-grid {
+  display: grid;
+  gap: var(--sp-8);
+  align-items: start;
+}
+.author-col {
+  max-width: var(--measure);
+}
+
+.release-log {
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  overflow: hidden;
+}
+.release-log-head {
+  padding: 0.85rem var(--sp-4);
+  border-bottom: var(--hair);
+  background: hsl(var(--surface-2));
+  font-size: var(--t-micro);
+  letter-spacing: 0.06em;
+  /* On --surface-2: see .shot-chrome-name for why this rung, not --fg-subtle. */
+  color: hsl(var(--muted-foreground));
+}
+
+/* The card used to list all twenty-one releases down to v0.0.1 — the densest
+   monospace block on a page that otherwise avoids them, and a developer
+   changelog in a section a non-technical reader is being asked to trust. Five
+   and a link says the same thing. */
+.release-log-more {
+  padding: 0.85rem var(--sp-4);
+  border-top: var(--hair);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+.release-log-more a {
+  color: hsl(var(--fg-secondary));
+  transition: color 0.15s ease;
+}
+.release-log-more a:hover {
+  color: hsl(var(--foreground));
+}
+
+.release-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--t-small);
+  font-variant-numeric: tabular-nums;
+}
+.release-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-block: 0.28rem;
+}
+/* The DATE leads the row and WHAT CHANGED follows it — see the note in
+   web/tools/sync-release.cjs for why there is no version number here at all.
+   Nothing in the row is set in mono any more: the version string was the one
+   thing that wanted character alignment, and with it gone a mono column would
+   be dressing a plain-English phrase as a machine identifier. */
+.rel-d {
+  color: hsl(var(--fg-secondary));
+  white-space: nowrap;
+}
+.rel-n {
+  color: hsl(var(--fg-subtle));
+  text-align: right;
+  text-wrap: balance;
+}
+/* The current release is the one the whole page is about. */
+.release-list li:first-child .rel-n,
+.release-list li:first-child .rel-d {
+  color: hsl(var(--foreground));
+}
+
+/* --- 7. SECTIONS ---------------------------------------------------------- */
+
+/* 7.1 Hero */
+
+.section-hero {
+  padding-top: clamp(3.5rem, 8vw, 6.5rem);
+  padding-bottom: var(--section-y);
+}
+
+.hero-copy {
+  max-width: 46rem;
+}
+
+/* 24ch, not 18ch. At 18ch the H1 set to four lines inside a 480px box beside a
+   773px screenshot and lost the size battle to the picture. */
+.hero-title {
+  max-width: 24ch;
+}
+
+.hero-lede {
+  margin-top: var(--sp-5);
+  max-width: var(--measure);
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-6);
+  margin-top: var(--sp-7);
+}
+
+/* The page's most load-bearing honesty line — Windows only, unsigned installer,
+   SmartScreen. The deck asks for "same visual weight as a caption, not a
+   footnote"; at 14px on --fg-subtle it was the faintest text in the fold, which
+   is the opposite of that. Caption SIZE, prose COLOUR. */
+.hero-fineprint {
+  margin-top: var(--sp-5);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+}
+/* Three claims, three lines. Run together as one paragraph, the answer to the
+   first question a visitor has — which platforms — was buried mid-sentence in
+   grey fine print. */
+.hero-fineprint-line {
+  display: block;
+}
+/* The SmartScreen warning. True, and the reader meets it thirty seconds after
+   clicking the button above, so it cannot wait until the install section
+   23,000px down the page. A rung quieter than the two lines above it. */
+.hero-fineprint-sub {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: var(--t-micro);
+  color: hsl(var(--fg-subtle));
+}
+.hero-fineprint-sub a {
+  color: hsl(var(--fg-secondary));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--border-strong));
+  text-underline-offset: 0.2em;
+  transition: color 0.15s ease;
+}
+.hero-fineprint-sub a:hover {
+  color: hsl(var(--foreground));
+}
+
+/* The "this example is invented" line. It belongs to the section head, one rung
+   quieter than the lede above it, and it is never allowed to be smaller than
+   the fine print in the fold — a disclosure you have to hunt for is not one.
+   Its grid placement in the editorial rail is set with the rest of the head. */
+.disclosure {
+  margin-top: var(--sp-4);
+  max-width: var(--measure);
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: hsl(var(--fg-subtle));
+}
+
+/* The hero stage.
+
+   The screenshot is not a 16:9 rectangle floated in the middle of the fold. It
+   is the Home window, recut so the frame holds only the three things the
+   headline promises — the pasted URL, the fetched preview, the Download button
+   — sitting on the same ember the app's own canvas is lit by.
+
+   The bloom is ONE lamp, the same hue family as .app-canvas's key light and at
+   a comparable budget, just closer to the subject. It is not coral: coral is
+   14 100% 62% and it is spent on the button inside the picture and on the CTA
+   above it, which is the point. Radial gradients are soft by construction, so
+   no filter: blur() is involved. */
+
+.hero-stage {
+  position: relative;
+  margin-top: clamp(2.5rem, 6vw, 4.5rem);
+}
+.hero-stage::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  /* Right inset stays ~0: past 72rem the stage already runs to the viewport
+     edge, and anything further right would widen the document. */
+  inset: -30% -2% -40% -6%;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      58% 54% at 48% 46%,
+      hsl(22 80% 56% / 0.16) 0%,
+      hsl(20 68% 48% / 0.075) 44%,
+      transparent 72%
+    ),
+    radial-gradient(
+      50% 42% at 52% 90%,
+      hsl(16 62% 50% / 0.06) 0%,
+      transparent 70%
+    );
+}
+.hero-stage .shot {
+  position: relative;
+  z-index: 1;
+  margin-top: 0;
+}
+
+/* 7.2 The artifact */
+
+.artifact-frame {
+  margin-top: var(--sp-7);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  /* `clip`, not `hidden`: both cut the doc sheet to the frame's radius, but
+     `hidden` makes this element a scroll container, which kills `position:
+     sticky` on .frame-label below. `hidden` stays first as the fallback for
+     engines that don't know `clip` — they lose the pinned chip, not the clip. */
+  overflow: hidden;
+  overflow: clip;
+  /* main.js scrolls this frame back into view when the document is collapsed
+     from a scrolled position. Every declarative anchor lands correctly because
+     .section carries scroll-margin-top; this is a <figure> and inherited none,
+     so the page's one scripted scroll was the only one that landed under the
+     sticky bar. scrollIntoView honours scroll-margin, so no JS change. */
+  scroll-margin-top: calc(var(--nav-h) + 1rem);
+}
+
+/* PINNED, so the "A made-up example" chip cannot be scrolled away from the
+   invented statistics it disclaims. Expanded, the document runs several
+   screens; the disclosure sat above all of it, and a reader who scrolled — or
+   screenshotted a slide — carried the numbers off with no label attached. */
+.frame-label {
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-5);
+  background: hsl(var(--surface));
+  border-bottom: var(--hair);
+  font-size: var(--t-micro);
+  font-weight: 620;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--fg-subtle));
+}
+
+/* Which tier of export this is. The app is explicit that small pills have ONE
+   geometry — ui/badge.tsx documents PILL_BOX as "the one pill geometry in the
+   app", rounded-full — and this chip used to declare a 4px radius, which is on
+   none of the three published rungs and matches nothing in the app. */
+.frame-meta {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  padding: 0.1rem 0.6rem;
+  border: var(--hair);
+  border-radius: 999px;
+  background: hsl(var(--surface-2));
+  color: hsl(var(--muted-foreground));
+}
+
+/* The stage exists so the fade can sit OVER the viewport instead of inside it.
+   The hairline under it turns what was a tonal seam — the --surface-2 document
+   sheet ending against the --surface frame, with the expand control sitting on
+   the darker band — into the same deliberate rule the frame label uses at the
+   top. Same object, ruled top and bottom. */
+.artifact-stage {
+  position: relative;
+  border-bottom: var(--hair);
+}
+
+.artifact-viewport {
+  /* The deck asks for "roughly 600px". 43rem is that plus enough to land the
+     cut on prose rather than mid-slide — a paragraph dissolving reads as "there
+     is more", an image sliced in half reads as a bug. */
+  height: 43rem;
+  overflow: hidden;
+  background: hsl(var(--surface-2));
+}
+.artifact-viewport[data-expanded="true"] {
+  height: auto;
+}
+
+.artifact-fade {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 8rem;
+  background: linear-gradient(
+    to top,
+    hsl(var(--surface-2)) 0%,
+    hsl(var(--surface-2) / 0.82) 42%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+.artifact-viewport[data-expanded="true"] + .artifact-fade {
+  display: none;
+}
+
+.artifact-expand {
+  margin: var(--sp-5);
+}
+
+/* 7.2b The exported document itself.
+
+   This is the artifact, so it is built as a page: a surface-2 sheet (brighter
+   than the --surface frame around it), a title, one comfortable measure of
+   prose, and a left gutter that IS the timeline — a hairline with a marker and
+   a mono timestamp wherever a slide landed. Nothing here is coral. */
+
+.doc {
+  max-width: 52rem;
+  margin-inline: auto;
+  padding: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 3.5vw, 2.75rem)
+    clamp(3rem, 8vw, 6rem);
+}
+
+/* Inside .doc-body's timeline grid, in the same column as the prose. It used to
+   sit outside it, so its left edge was 104px to the left of every paragraph it
+   introduced and its rule stopped 247px short of their measure — a mis-set page
+   in the one figure the section is built to show off. */
+.doc-title {
+  grid-column: 2;
+  font-size: clamp(1.375rem, 1.05rem + 1.35vw, 1.9375rem);
+  font-weight: 660;
+  line-height: 1.15;
+  letter-spacing: -0.028em;
+  color: hsl(var(--foreground));
+  max-width: 34ch;
+  padding-bottom: var(--sp-5);
+  margin-bottom: var(--sp-4);
+  border-bottom: var(--hair);
+}
+
+.doc-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  column-gap: 2rem;
+  row-gap: clamp(1rem, 2vw, 1.35rem);
+}
+/* the timeline the slide markers hang off */
+.doc-body::before {
+  content: "";
+  position: absolute;
+  left: 5.5rem;
+  top: 0.4rem;
+  bottom: 0.4rem;
+  width: 1px;
+  background: hsl(var(--border));
+}
+
+.doc-p {
+  grid-column: 2;
+  max-width: 70ch;
+  font-size: clamp(0.875rem, 0.845rem + 0.13vw, 0.9375rem);
+  line-height: 1.72;
+  color: hsl(var(--muted-foreground));
+}
+
+.doc-slide {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: start;
+  margin-block: clamp(0.35rem, 1vw, 0.75rem);
+}
+/* subgrid is the nice path; this is the fallback for engines without it. */
+@supports not (grid-template-columns: subgrid) {
+  .doc-slide {
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    column-gap: 2rem;
+  }
+}
+
+.doc-time {
+  position: relative;
+  grid-column: 1;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  /* On the --surface-2 document sheet: see .shot-chrome-name. */
+  color: hsl(var(--muted-foreground));
+}
+/* the marker that sits on the timeline itself — decoration, so accent-muted */
+.doc-time::after {
+  content: "";
+  position: absolute;
+  top: 0.5em;
+  right: -1.1875rem;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: hsl(var(--accent-muted));
+}
+
+/* The <picture> is the grid item here, not the <img> inside it. */
+.doc-slide picture {
+  display: block;
+  grid-column: 2;
+  max-width: 24rem;
+}
+.doc-slide img {
+  width: 100%;
+  height: auto;
+  border: var(--hair);
+  border-radius: var(--r-thumb);
+}
+
+/* The caption, and beside it the run record for the export above. Every field in
+   the record is read off web/assets/doc/artifact.json — it is not decoration and
+   it is not a stand-in for ASSET-LOOP, which is simply not built (see the note in
+   index.html). It is here because this section's whole job is attaching an
+   artifact to a claim, and a right-hand column of small labelled rows is how the
+   app itself carries this kind of material. */
+.artifact-after {
+  display: grid;
+  gap: var(--sp-6);
+  margin-top: var(--sp-6);
+}
+.note-caption {
+  color: hsl(var(--muted-foreground));
+}
+
+.run-record {
+  display: grid;
+  gap: 0;
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  overflow: hidden;
+}
+.run-row {
+  display: grid;
+  grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-3) var(--sp-4);
+  font-size: var(--t-small);
+}
+.run-row + .run-row {
+  border-top: var(--hair);
+}
+.run-record dt {
+  font-size: var(--t-micro);
+  font-weight: 620;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--fg-subtle));
+  line-height: 1.5;
+}
+.run-record dd {
+  margin: 0;
+  color: hsl(var(--muted-foreground));
+}
+/* A URL is a URL: mono, per the design law. */
+.run-record dd a {
+  /* 44px tall whether the URL sets to one line or two. */
+  display: inline-block;
+  padding-block: 0.75rem;
+  margin-block: -0.5rem;
+  font-family: var(--font-mono);
+  /* Mono runs optically larger than Inter, but never below the page's 14px
+     floor — see the `code` rule. */
+  font-size: max(0.92em, 0.875rem);
+  color: hsl(var(--fg-secondary));
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--border-strong));
+  text-underline-offset: 0.2em;
+  word-break: break-all;
+}
+.run-record dd a:hover {
+  color: hsl(var(--foreground));
+  text-decoration-color: hsl(var(--accent-muted));
+}
+
+/* 7.3 The chain diagram — signature visual.
+
+   One object, two renderings. Below 64rem the HTML flow is the picture: a
+   vertical spine with numbered stations and the stop-points cutting across it
+   where each category drops out. At 64rem and up the inline SVG takes over and
+   the HTML goes sr-only, still carrying every string for assistive tech.
+
+   Colour: the spine is the brightest thing in here because the spine is Sift.
+   Competitor coverage is drawn in --border-strong, the walls in --fg-subtle,
+   node glyphs in --accent-muted. Coral appears nowhere. */
+
+.chain-diagram {
+  position: relative;
+  margin-top: var(--sp-7);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+}
+
+/* --- the SVG rendering ---
+
+   SIZE LAW FOR THIS BLOCK. Every font-size below is in viewBox units, and the
+   viewBox is 1200 wide, so what a reader actually gets is `declared * (rendered
+   width / 1200)`. The widest this diagram is ever rendered is the content
+   column, so that ratio caps out just under 1 and can only fall from there.
+   It used to be allowed to fall a long way: the SVG took over at 64rem, where
+   the drawing renders about 900px wide, and 14-unit detail text arrived on
+   screen at 10.5px. Two changes fix it, and they have to stay together:
+
+     1. the handover moved to 78rem (see section 10), below which the HTML flow
+        — real, fluid, >=14px type — is the diagram;
+     2. the sizes here are set so that at that handover width nothing lands
+        under ~13.8px, and at 1264px and up nothing lands under 14px.
+
+   If you lower the breakpoint, you have to raise these, and the pre-broken
+   tspans in the markup then need re-breaking or they run off the viewBox. */
+
+.chain-canvas {
+  display: none;
+}
+
+.chain-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--font-sans);
+  font-synthesis-weight: none;
+}
+
+/* Solid — see .chain-input. */
+.cd-chip {
+  fill: hsl(var(--surface-2));
+  stroke: hsl(var(--border-strong));
+  stroke-width: 1;
+}
+
+/* Matches .chain-input-kicker in the HTML rendering: --accent-muted is 4.25:1
+   on the --surface-2 chip this label sits inside, so the words take a text rung
+   and the accent stays on decoration. */
+.cd-kicker {
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  fill: hsl(var(--muted-foreground));
+}
+
+.cd-node-label {
+  font-size: 18px;
+  font-weight: 620;
+  letter-spacing: -0.012em;
+  fill: hsl(var(--foreground));
+}
+
+.cd-detail {
+  font-size: 15px;
+  fill: hsl(var(--muted-foreground));
+}
+
+.cd-spine {
+  stroke: hsl(var(--fg-secondary));
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.cd-dot {
+  fill: hsl(var(--surface-2));
+  stroke: hsl(var(--border-strong));
+  stroke-width: 1;
+}
+
+.cd-num {
+  font-family: var(--font-mono);
+  font-size: 14.5px;
+  font-weight: 600;
+  /* Matches .chain-num in the HTML rendering, and for the same reason. */
+  fill: hsl(var(--fg-secondary));
+  text-anchor: middle;
+}
+
+.cd-rails line {
+  stroke: hsl(var(--border));
+  stroke-width: 1;
+  stroke-dasharray: 3 7;
+}
+.cd-rails .cd-rail-soft {
+  stroke-dasharray: 1 6;
+}
+
+/* the whole chain, as a hairline, once per competitor row */
+.cd-track {
+  stroke: hsl(var(--border));
+  stroke-width: 1;
+}
+
+/* the part of it that category actually covers */
+.cd-seg {
+  fill: hsl(var(--border-strong));
+}
+
+/* where the coverage ends */
+.cd-wall {
+  stroke: hsl(var(--fg-subtle));
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* where it begins, on something it did not produce itself */
+.cd-open {
+  stroke: hsl(var(--border-strong));
+  stroke-width: 2;
+  stroke-dasharray: 3 3;
+}
+
+.cd-entry {
+  fill: none;
+  stroke: hsl(var(--fg-subtle));
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cd-stop {
+  font-size: 16.5px;
+  font-weight: 620;
+  letter-spacing: -0.008em;
+  fill: hsl(var(--fg-secondary));
+}
+
+.cd-sub {
+  font-size: 14.5px;
+  fill: hsl(var(--fg-subtle));
+}
+
+/* Annotations sit over the rails, so they knock a panel-coloured halo out of
+   whatever crosses behind them rather than being struck through by it. */
+.cd-stop,
+.cd-sub {
+  paint-order: stroke fill;
+  stroke: hsl(var(--surface));
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+
+/* --- the HTML rendering: the mobile picture, and the accessible text --- */
+
+/* Solid, not dashed. "Different shape or weight" is what the deck asks of the
+   input node, and a dashed border is the vocabulary this page uses elsewhere for
+   "not built yet" — so the diagram's own input read as a placeholder. The weight
+   now comes from the border strength and the brighter fill. */
+.chain-input {
+  padding: var(--sp-5);
+  border: 1px solid hsl(var(--border-strong));
+  border-radius: var(--r-card);
+  background: hsl(var(--surface-2));
+  max-width: 34rem;
+}
+
+/* --accent-muted is 4.25:1 on the --surface-2 chip this label sits in, so it
+   cannot carry the words. It keeps the accent as a RULE instead, which is
+   exactly what .eyebrow does: decoration in accent-muted, text on a text rung. */
+.chain-input-kicker {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--t-micro);
+  font-weight: 620;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  margin-bottom: var(--sp-2);
+}
+.chain-input-kicker::before {
+  content: "";
+  flex: none;
+  width: 1.25rem;
+  height: 1px;
+  background: hsl(var(--accent-muted));
+}
+
+.chain-nodes {
+  position: relative;
+  display: grid;
+  gap: var(--sp-6);
+  margin-top: var(--sp-6);
+  padding-left: 2.5rem;
+}
+/* the spine */
+.chain-nodes::before {
+  content: "";
+  position: absolute;
+  /* Half of .chain-num's 1.5rem, so the spine runs through the glyph centres. */
+  left: 0.75rem;
+  top: calc(var(--sp-6) * -1);
+  bottom: 0.6rem;
+  width: 1px;
+  background: hsl(var(--fg-secondary) / 0.55);
+}
+
+.chain-node {
+  position: relative;
+}
+
+.chain-num {
+  position: absolute;
+  left: -2.5rem;
+  top: -0.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: var(--hair);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  /* A step number is read, not glanced at, so it is text and takes a text rung.
+     --accent-muted is 4.25:1 on the --surface-2 disc it sits on. */
+  color: hsl(var(--fg-secondary));
+  background: hsl(var(--surface-2));
+}
+
+.chain-label {
+  font-size: var(--t-h3);
+  margin-bottom: var(--sp-2);
+}
+
+.chain-detail {
+  font-size: var(--t-small);
+  color: hsl(var(--muted-foreground));
+  max-width: 46ch;
+}
+
+/* A stop-point cuts across the spine at the node it belongs to. */
+.chain-stop {
+  position: relative;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+}
+.chain-stop::before {
+  content: "";
+  position: absolute;
+  left: -2.5rem;
+  top: 1.5rem;
+  width: 1.5rem;
+  height: 2px;
+  background: hsl(var(--fg-subtle));
+}
+/* an entry point, not a stop: a chevron pointing into the line */
+.chain-stop[data-kind="entry"]::before {
+  left: -2.05rem;
+  top: 1.25rem;
+  width: 0.55rem;
+  height: 0.55rem;
+  background: none;
+  border-right: 2px solid hsl(var(--fg-subtle));
+  border-bottom: 2px solid hsl(var(--fg-subtle));
+  transform: rotate(-45deg);
+}
+
+.chain-stop-line {
+  font-size: var(--t-small);
+  font-weight: 620;
+  color: hsl(var(--fg-secondary));
+}
+
+.chain-stop-sub {
+  font-size: var(--t-small);
+  color: hsl(var(--fg-subtle));
+  max-width: 52ch;
+}
+
+.chain-closing {
+  margin-top: var(--sp-8);
+}
+
+/* 7.3b The story.
+
+   Three short paragraphs in the first person, sitting directly under the hero.
+   It reuses .prose wholesale — the only thing it adds is the signature, which
+   is a beat rather than a sentence and so is set away from the paragraph it
+   follows and lightened a rung. */
+/* The opening paragraph carries the section. Setting it at lede size gives the
+   three paragraphs an order to be read in — without it the whole section is one
+   flat grey slab, which is what it was, at the exact moment a first-time reader
+   decides whether to keep scrolling. */
+.story-body .story-open {
+  font-size: var(--t-lede);
+  line-height: 1.55;
+  color: hsl(var(--fg-secondary));
+}
+
+/* The signature is a beat, not a sentence. Below 78rem it follows the last
+   paragraph; at 78rem and up it moves into the rail (see the rail block), which
+   is otherwise a 220px void beside the emptiest composition on the page. */
+.story-sign {
+  margin-top: var(--sp-5);
+  font-size: var(--t-small);
+  letter-spacing: 0.02em;
+  color: hsl(var(--fg-subtle));
+}
+.story-sign > span {
+  display: inline-block;
+  padding-top: var(--sp-3);
+  border-top: 1px solid hsl(var(--accent-muted));
+}
+
+/* 7.3c Platforms.
+
+   Ten names as hairline pills and one plain-text tail. The pills are the app's
+   one pill geometry (rounded-full — see .frame-meta), and nothing in here is
+   coral: these are labels, not choices you can make. */
+.platform-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-6);
+}
+.platform-row li {
+  padding: 0.34rem 0.85rem;
+  border: var(--hair);
+  border-radius: 999px;
+  background: hsl(var(--surface));
+  font-size: var(--t-small);
+  line-height: 1.35;
+  color: hsl(var(--fg-secondary));
+}
+/* The tail is a sentence, not a name, so it drops the pill and keeps the rung
+   below the names it follows. */
+.platform-row .platform-more {
+  padding-inline: 0;
+  border: 0;
+  background: none;
+  color: hsl(var(--muted-foreground));
+}
+
+.platform-note {
+  margin-top: var(--sp-5);
+}
+
+/* The Linux / Mac state under the download button. Same list geometry as
+   .ai-options so the two read as the same kind of object. */
+.platform-status {
+  display: grid;
+  gap: 0;
+  margin-top: var(--sp-6);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  overflow: hidden;
+  text-align: left;
+}
+.platform-status li {
+  padding: var(--sp-4) var(--sp-5);
+  font-size: var(--t-small);
+  color: hsl(var(--muted-foreground));
+}
+.platform-status li + li {
+  border-top: var(--hair);
+}
+.platform-status strong {
+  color: hsl(var(--foreground));
+  font-weight: 620;
+}
+
+/* 7.4 Comparison table */
+
+.table-block {
+  margin-top: var(--sp-9);
+}
+
+.table-caption {
+  font-size: var(--t-micro);
+  font-weight: 620;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--fg-subtle));
+  margin-bottom: var(--sp-4);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  -webkit-overflow-scrolling: touch;
+}
+.table-scroll:focus-visible {
+  outline-offset: -2px;
+}
+
+.compare {
+  width: 100%;
+  min-width: 52rem;
+  font-size: var(--t-small);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.compare th,
+.compare td {
+  padding: var(--sp-4);
+  vertical-align: top;
+  border-bottom: var(--hair);
+}
+.compare tbody tr:last-child th,
+.compare tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.compare thead th {
+  border-bottom: 1px solid hsl(var(--border-strong));
+  background: hsl(var(--surface-2));
+  vertical-align: bottom;
+}
+
+.th-name {
+  display: block;
+  color: hsl(var(--foreground));
+  font-weight: 640;
+  letter-spacing: -0.01em;
+}
+/* Brand examples under each category name. This is sub-copy a reader parses,
+   not a tracked label, so it takes the 14px rung rather than the 13px one. */
+.th-sub {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: var(--t-small);
+  font-weight: 450;
+  letter-spacing: 0;
+  /* thead is --surface-2: see .shot-chrome-name. */
+  color: hsl(var(--muted-foreground));
+}
+
+.compare tbody th {
+  font-weight: 600;
+  color: hsl(var(--fg-secondary));
+  width: 15rem;
+}
+
+.compare td {
+  color: hsl(var(--muted-foreground));
+}
+
+/* The Sift column reads as the subject of the table: a brighter surface, not a
+   coral one — and SOLID, with a rule down each outer edge. At 0.55 alpha it was
+   about three luminance points off its neighbours, i.e. invisible at reading
+   distance, in the one place the page is entitled to raise its own voice. The
+   edges are inset shadows rather than borders because the table is
+   border-collapse and a border here would fight the row rules. */
+.compare th:nth-child(2),
+.compare td:nth-child(2) {
+  background: hsl(var(--surface-2));
+  color: hsl(var(--fg-secondary));
+  box-shadow:
+    inset 1px 0 0 0 hsl(var(--border-strong)),
+    inset -1px 0 0 0 hsl(var(--border-strong));
+}
+
+/* Reading a wide table across eight rows is the one place on this page where a
+   hover state earns its keep. Colour only — the row never moves. */
+.compare tbody th,
+.compare tbody td {
+  transition: background-color 0.14s ease;
+}
+.compare tbody tr:hover th,
+.compare tbody tr:hover td {
+  background-color: hsl(var(--surface-2) / 0.42);
+}
+.compare tbody tr:hover th:nth-child(2),
+.compare tbody tr:hover td:nth-child(2) {
+  background-color: hsl(var(--surface-2));
+  filter: brightness(1.12);
+}
+
+.table-footnote {
+  margin-top: var(--sp-5);
+  max-width: var(--measure);
+  color: hsl(var(--muted-foreground));
+}
+
+.dateline {
+  margin-top: var(--sp-3);
+  font-size: var(--t-small);
+  color: hsl(var(--fg-subtle));
+}
+
+/* 7.5 Slides */
+
+/* No card. It was a 1184px box holding a 735px line — 38% of it empty — and its
+   chrome was identical to .honest-note's, so the page's emphasis moment and its
+   caveat box read as the same object. A pull-quote hangs its rule and lets the
+   type carry it: bigger, brighter, on the ground. The rule is --border-strong,
+   not an accent: nothing on this page gets a coloured border for emphasis. */
+.pullquote {
+  margin-block: var(--sp-8);
+  padding-left: var(--sp-6);
+  border-left: 1px solid hsl(var(--border-strong));
+  max-width: var(--measure);
+}
+.pullquote p {
+  font-size: clamp(1.25rem, 1.02rem + 1vw, 1.75rem);
+  line-height: 1.35;
+  letter-spacing: -0.022em;
+  color: hsl(var(--foreground));
+  max-width: none;
+}
+
+.honest-note {
+  margin-top: var(--sp-6);
+  padding: var(--sp-5);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  /* The same text column as everything else, plus this card's own padding. */
+  max-width: var(--measure-card);
+}
+.honest-note p {
+  max-width: none;
+}
+.honest-note p + p {
+  margin-top: var(--sp-4);
+}
+/* AI content earns the violet hairline. Nothing else does. */
+.honest-note-ai {
+  border-left: 2px solid hsl(var(--ai));
+}
+
+/* 7.6 AI providers */
+
+/* CAPPED. With no cap the card filled the full 964px content column, which put
+   its 14px body at ~137 characters a line — the longest measure on the site by
+   50%, in the one block explaining the only thing that costs the reader money.
+   It also read as a different component from the .lede directly above it,
+   because it was visibly wider than it. --measure-card is --measure plus the
+   card's own padding, so the TEXT inside lines up with the lede's text rather
+   than the card's border lining up with the lede's edge. */
+.ai-options {
+  display: grid;
+  gap: 0;
+  margin-top: var(--sp-6);
+  max-width: var(--measure-card);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  overflow: hidden;
+}
+.ai-options li {
+  padding: var(--sp-4) var(--sp-5);
+  font-size: var(--t-small);
+}
+.ai-options li + li {
+  border-top: var(--hair);
+}
+.ai-options strong {
+  color: hsl(var(--foreground));
+  font-weight: 620;
+}
+
+.cost-line {
+  margin-top: var(--sp-6);
+  padding: var(--sp-5);
+  border: var(--hair);
+  border-left: 2px solid hsl(var(--ai));
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  font-size: var(--t-lede);
+  line-height: 1.5;
+  color: hsl(var(--fg-secondary));
+  max-width: var(--measure-card);
+}
+
+.section .microcopy + .shot {
+  margin-top: var(--sp-5);
+}
+
+/* 7.7 Files — the two lists */
+
+.two-col {
+  display: grid;
+  gap: var(--sp-8);
+}
+
+.marked-list {
+  display: grid;
+  gap: var(--sp-3);
+  font-size: var(--t-small);
+}
+.marked-list li {
+  position: relative;
+  padding-left: 1.75rem;
+}
+.marked-list li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-mono);
+}
+/* The two lists make opposite claims and sat side by side at identical weight,
+   so at scroll speed a reader could not tell which column they were in without
+   reading the H3. The distinction is a step DOWN in weight, not a new hue: what
+   stays gets the accent, what leaves gets the quieter mark. */
+.marked-list-keep li::before {
+  content: "✓";
+  color: hsl(var(--accent-muted));
+}
+.marked-list-out li::before {
+  content: "↗";
+  color: hsl(var(--fg-subtle));
+}
+
+.list-rider {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: var(--hair);
+  font-size: var(--t-small);
+  color: hsl(var(--muted-foreground));
+}
+
+/* 7.8 Price */
+
+.stat-row {
+  display: grid;
+  gap: var(--sp-5);
+  margin-top: var(--sp-7);
+}
+
+/* The quietest chrome and the loudest type on the page, which is the reverse of
+   what this row used to be: 44px numerals — SMALLER than the 48px H2 above them
+   — inside the same card box as every other 3-up on the page, so the deck's
+   "large numerals / short labels" landed as another feature grid. No card now,
+   just a rule over each figure. */
+.stat {
+  padding-top: var(--sp-5);
+  border-top: 1px solid hsl(var(--border-strong));
+  /* Figure row and label row, aligned ACROSS the three columns. This used to be
+     a reserved second line on every .stat-figure (min-height: 2.1em) to keep the
+     labels on one baseline when a figure wrapped — but at every supported width
+     all three figures set to one line, so the reservation only ever rendered as
+     a band of dead space under each number. Subgrid does the same job and costs
+     nothing when nothing wraps; the fallback below keeps the labels sensible
+     where subgrid is unsupported. */
+  display: grid;
+  grid-template-rows: auto auto;
+  align-content: start;
+}
+@supports (grid-template-rows: subgrid) {
+  .stat-row {
+    grid-template-rows: auto auto;
+  }
+  .stat {
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+  }
+}
+
+.stat-figure {
+  display: block;
+  font-size: var(--t-stat);
+  font-weight: 660;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+  color: hsl(var(--foreground));
+  margin-bottom: var(--sp-3);
+}
+
+.stat-label {
+  display: block;
+  font-size: var(--t-small);
+  color: hsl(var(--muted-foreground));
+}
+
+/* 7.9 Install list */
+
+.install-list {
+  display: grid;
+  gap: var(--sp-5);
+  counter-reset: install;
+}
+.install-list > li {
+  counter-increment: install;
+  position: relative;
+  padding: var(--sp-5);
+  padding-left: calc(var(--sp-5) + 2.5rem);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+}
+.install-list > li::before {
+  content: counter(install);
+  position: absolute;
+  left: var(--sp-5);
+  top: var(--sp-5);
+  font-family: var(--font-mono);
+  font-size: var(--t-small);
+  font-weight: 600;
+  color: hsl(var(--fg-subtle));
+}
+.install-list h3 {
+  margin-bottom: var(--sp-2);
+}
+.install-list p {
+  max-width: none;
+}
+
+/* 7.10 FAQ */
+
+/* No 58rem clamp. The install list directly above ran the full content column
+   and the accordion was cut to 928px, so the page's right edge jumped for no
+   compositional reason. Both are structure, both run the content column, and
+   the ANSWERS keep the text measure. */
+.faq {
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  overflow: hidden;
+}
+
+.faq details + details {
+  border-top: var(--hair);
+}
+
+.faq summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  cursor: pointer;
+  font-size: var(--t-h3);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: hsl(var(--foreground));
+  list-style: none;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: "";
+  flex: none;
+  margin-left: auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid hsl(var(--fg-subtle));
+  border-bottom: 1.5px solid hsl(var(--fg-subtle));
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.15s ease;
+}
+.faq details[open] summary::after {
+  transform: rotate(225deg) translateY(-2px);
+}
+.faq summary:hover {
+  background: hsl(var(--surface-2) / 0.5);
+}
+
+.faq-body {
+  padding: 0 var(--sp-5) var(--sp-5);
+}
+.faq-body p {
+  max-width: var(--measure-small);
+}
+
+/* 7.11 Download */
+
+/* Left-aligned, like every other section. It was the only centred block on a
+   26,000px page, its microcopy centred into a three-line rag ending "…More /
+   info → Run anyway", and "Get it." was set at 68px — larger than the hero H1.
+   It read as a section imported from a more generic page. The final full-width
+   moment is earned with the rule above the links instead. */
+.section-download {
+  border-top: var(--hair);
+}
+/* The `::before` opt-out for this section lives with the separator rule itself
+   (see "THE SELECTORS MUST OUT-SPECIFY THE RULE ABOVE"), where it can carry the
+   `.section + .section` prefix it needs to win. */
+.section-download .wrap {
+  max-width: calc(var(--wrap) + var(--gutter) * 2);
+}
+
+.download-title {
+  font-size: var(--t-h2);
+  margin-bottom: var(--sp-6);
+}
+
+.download-microcopy {
+  margin-top: var(--sp-5);
+  max-width: var(--measure);
+}
+
+.link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3) var(--sp-6);
+  margin-top: var(--sp-7);
+  padding-top: var(--sp-6);
+  border-top: var(--hair);
+  font-size: var(--t-small);
+  font-weight: 600;
+}
+.link-row a {
+  color: hsl(var(--fg-secondary));
+  transition: color 0.15s ease;
+}
+.link-row a:hover {
+  color: hsl(var(--foreground));
+}
+.section-download .link-row + .microcopy {
+  margin-top: var(--sp-4);
+}
+
+/* 7.12 The Mac list.
+
+   Sits directly under .platform-status and is deliberately the same object:
+   hairline, --r-card, --surface, full width of the column. The Mac row says
+   "not built yet"; this is the sentence after it, so it should not look like a
+   different kind of thing landing on the page.
+
+   The one rule this section exists to obey: the submit button is NOT coral.
+   Coral marks exactly one action, and on this section that action is the
+   Windows download. The submit takes .btn-quiet — the same secondary chip the
+   nav uses — so it reads as available without competing. */
+
+.signup {
+  margin-top: var(--sp-5);
+  padding: var(--sp-5);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  text-align: left;
+}
+
+.signup-head {
+  font-size: var(--t-h3);
+  letter-spacing: -0.02em;
+  color: hsl(var(--foreground));
+}
+
+.signup-lede,
+.signup-privacy {
+  font-size: var(--t-small);
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground));
+  max-width: var(--measure);
+}
+
+.signup-lede {
+  margin-top: var(--sp-2);
+}
+
+.signup-action {
+  margin-top: var(--sp-5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+}
+
+/* The honesty line. It sits under the whole block, on the hairline, because it
+   is a statement about the page rather than a hint about anything above it. */
+.signup-privacy {
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-5);
+  border-top: var(--hair);
+}
+
+/* The signup form's fields, submit states, status line and done panel used to
+   live here — about 190 lines. The form is gone (see web/main.js section 4d);
+   the card it sat in stays. Both are in git history. */
+
+/* --- 8. SHARED COMPONENTS ------------------------------------------------- */
+
+/* 8.1 Screenshots.
+
+   A shot is presented as what it is: a window of the app, sitting on the page.
+   Frame = --surface (brighter than the ground), hairline edge, --r-card corner,
+   a chrome strip carrying the app's own corner-mark and the Windows control
+   glyphs, and --lift underneath. Nothing in here is coral: the chrome is
+   monochrome in the app and it stays monochrome here. */
+
+.shot {
+  position: relative;
+  margin-top: var(--sp-7);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  overflow: hidden;
+  box-shadow: var(--lift);
+}
+
+.shot-chrome {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 2rem;
+  padding-inline: var(--sp-4);
+  background: hsl(var(--surface-2));
+  border-bottom: var(--hair);
+}
+
+/* The app's identity ornament, at glyph size. --accent-muted, like every other
+   decorative use of it on the page. */
+.shot-chrome-mark {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  --mark-size: 5px;
+  --mark-inset: 0px;
+  --mark-thickness: 1.25px;
+}
+
+/* --muted-foreground, not --fg-subtle. The chrome strip is --surface-2, and the
+   token ladder's published ratios are measured on --surface: fg-subtle is 5.2:1
+   there and 4.37:1 here, which is a fail. Every micro-label on this page that
+   sits on surface-2 takes this rung, for this reason. */
+.shot-chrome-name {
+  font-family: var(--font-mono);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: hsl(var(--muted-foreground));
+}
+
+/* minimise / maximise / close, drawn rather than typed — the mono subset the
+   page ships has no box-drawing glyphs to fall back on. */
+.shot-chrome-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6875rem;
+  margin-left: auto;
+}
+.shot-chrome-controls i {
+  position: relative;
+  display: block;
+  width: 8px;
+  height: 8px;
+}
+.shot-chrome-controls i:nth-child(1) {
+  border-bottom: 1px solid hsl(var(--fg-disabled));
+  height: 5px;
+}
+.shot-chrome-controls i:nth-child(2) {
+  border: 1px solid hsl(var(--fg-disabled));
+  border-radius: 1px;
+}
+.shot-chrome-controls i:nth-child(3)::before,
+.shot-chrome-controls i:nth-child(3)::after {
+  content: "";
+  position: absolute;
+  top: 3.5px;
+  left: -1px;
+  width: 10px;
+  height: 1px;
+  background: hsl(var(--fg-disabled));
+}
+.shot-chrome-controls i:nth-child(3)::before {
+  transform: rotate(45deg);
+}
+.shot-chrome-controls i:nth-child(3)::after {
+  transform: rotate(-45deg);
+}
+
+/* Every shot is served through <picture>: the srcset ladder is WebP (about a
+   twelfth of the PNG's bytes on this material) and the <img> inside carries one
+   PNG as the fallback. A browser that doesn't know <picture> ignores <source>
+   and gets that PNG, which is why the ladder isn't just put on the <img>: an
+   srcset a browser can't decode has no fallback at all. */
+.shot-media {
+  display: block;
+  background: hsl(var(--surface-2));
+}
+.shot-media picture {
+  display: block;
+}
+.shot-media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Reframing is done upstream, in web/tools/derive-shots.cjs — every shot is
+   cropped there to one device aspect (1.60) before it is ever written, so there
+   is no runtime crop hook here. Adding one back would give the page a second
+   place where a screenshot's framing is decided. */
+
+/* The library pair. Two captures of the same screen in two modes, so they are
+   NOT two identical rectangles: the tiles view is the full window, and the
+   table is cut to a band of rows — its toolbar and tag rail are pixel-identical
+   to the one directly above it — then stepped in from the left so the two read
+   as one stack rather than a list. */
+.shot-pair {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  margin-top: var(--sp-7);
+}
+.shot-pair .shot {
+  margin-top: 0;
+}
+
+/* 8.2 Feature cards */
+.cards {
+  display: grid;
+  gap: var(--sp-4);
+  margin-top: var(--sp-7);
+}
+
+.card {
+  padding: var(--sp-5);
+  border: var(--hair);
+  border-radius: var(--r-card);
+  background: hsl(var(--surface));
+  transition: border-color 0.2s ease;
+}
+/* Cards aren't links, so the hover is a hairline brightening and nothing more —
+   no lift, no shadow, no cursor change. */
+.card:hover {
+  border-color: hsl(var(--border-strong));
+}
+.card h3,
+.card h4 {
+  margin-bottom: var(--sp-3);
+}
+.card p {
+  font-size: var(--t-small);
+  color: hsl(var(--muted-foreground));
+}
+
+/* Once the cards are side by side, a one-line title next to two-line titles put
+   three body baselines in one row and left 73px of dead padding under the short
+   card. Two lines of headroom is the floor; the bodies then share a baseline. */
+@media (min-width: 40rem) {
+  .cards .card h3,
+  .cards .card h4 {
+    min-height: 2.5em;
+  }
+}
+
+/* --- 9. FOOTER ------------------------------------------------------------ */
+
+.footer {
+  border-top: var(--hair);
+  padding-block: var(--sp-9) var(--sp-8);
+  background: hsl(var(--rail) / 0.6);
+}
+
+.footer-cols {
+  display: grid;
+  gap: var(--sp-7);
+}
+
+.footer-head {
+  font-size: var(--t-micro);
+  font-weight: 620;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: hsl(var(--fg-subtle));
+  margin-bottom: var(--sp-4);
+}
+
+/* The rows carry their own vertical padding now (44px hit boxes), so the gap
+   between them comes down to keep the column the height it was. */
+.footer-col ul {
+  display: grid;
+  gap: var(--sp-1);
+  font-size: var(--t-small);
+}
+.footer-col a {
+  color: hsl(var(--muted-foreground));
+  transition: color 0.15s ease;
+}
+.footer-col a:hover {
+  color: hsl(var(--foreground));
+}
+/* dawid.ai was a second <a> to the identical href beside "Dawid Jóźwiak" — two
+   tab stops and two announcements for one destination, and an addition the deck
+   did not ask for. It is the string, in mono, because it is a URL. */
+.footer-plain {
+  padding-block: 0.7rem;
+  font-family: var(--font-mono);
+  color: hsl(var(--fg-subtle));
+}
+
+.footer-base {
+  margin-top: var(--sp-8);
+  padding-top: var(--sp-6);
+  border-top: var(--hair);
+}
+
+/* Real sentences, so the prose rung — same call as .microcopy and .hero-fineprint. */
+/* The smallest type on the page was set to the longest measure on it — 736px
+   at 14px is ~105 characters. Those two things move in opposite directions. */
+.footer-closing {
+  max-width: var(--measure-small);
+  font-size: var(--t-small);
+  color: hsl(var(--muted-foreground));
+}
+
+/* --fg-disabled is 2.1:1 and tokens.css reserves it for dead controls. This
+   line is text a reader may actually want — the licence and the year — so it
+   takes the lowest rung that is still readable. */
+.footer-copy {
+  margin-top: var(--sp-4);
+  font-size: var(--t-small);
+  color: hsl(var(--fg-subtle));
+}
+
+/* --- 10. RESPONSIVE ------------------------------------------------------- */
+
+@media (min-width: 40rem) {
+  /* 640px */
+  .cards-2,
+  .cards-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stat-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .footer-cols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 56rem) {
+  /* 896px — the point the nav fits on one line */
+  .nav-toggle,
+  .js .nav-toggle {
+    display: none;
+  }
+  .two-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-8);
+  }
+  /* The band steps in from the left and stops short of the lead's right edge,
+     so the pair reads as one object seen twice rather than as two tiles. */
+  .shot-pair-band {
+    width: 88%;
+    margin-left: auto;
+  }
+  /* `start`, not the default stretch: the caption is five lines and the record
+     beside it is a table, so stretching the caption cell held ~240px of dead
+     black open under it. They are two objects that share a top edge, not two
+     halves of one block. */
+  /* CENTRED, not top-aligned. The record is three bordered rows (261px); the
+     caption beside it is four lines (140px) and got shorter again when the copy
+     was cut. At `start` the whole 120px difference piled up as a hole under the
+     left column, bounded on its right by the record's border — it read as a
+     missing paragraph. Centred, the same 120px becomes 60px of margin above and
+     below a short note set against a table, which is a composition rather than
+     a gap. Adding a fourth caption line to fill it is the wrong direction under
+     a brief that is cutting copy. */
+  .artifact-after {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 21rem);
+    gap: var(--sp-8);
+    align-items: center;
+  }
+  .author-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 23rem);
+  }
+}
+
+/* Between 896px and 1247px the chain diagram renders as the mobile vertical
+   stack inside a panel that is now full content width, leaving ~48% of the card
+   empty beside a 575px text column. That band covers 1152 and 1194 laptops and
+   any 1280 window with a sidebar, so it is a common desktop, and it read as a
+   rendering failure rather than a responsive decision. Capping and centring the
+   flow makes the panel a deliberate column instead of a half-empty rectangle. */
+@media (min-width: 56rem) and (max-width: 77.999rem) {
+  .chain-flow {
+    max-width: 44rem;
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 64rem) {
+  /* 1024px */
+  .cards-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  /* Six full-width cards each holding three lines of text is six 1094px boxes
+     with their right halves empty. Two up fills the column and evens the rows. */
+  .install-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* STRETCH, not start. `align-items: start` was written when the six items
+       were close to even; the copy rewrite shortened item 1 to three lines
+       while item 2 stayed at eight, which left a 132px empty gap under a
+       bordered card with a bordered card beside it — bounded on three sides by
+       hairlines, and the most conspicuous void on the page. Stretching lets the
+       padding absorb the difference so each row reads as a pair. */
+    align-items: stretch;
+  }
+}
+
+/* --- THE EDITORIAL RAIL --------------------------------------------------
+   Above 78rem the page becomes a two-column grid: a left margin column holding
+   the section label and nothing else, and the content column beside it. Before
+   this, every section ran one 60-70ch column hard against the left edge of a
+   1184px container with the entire right half empty — the measure was right and
+   the composition was not, and the emptiness read as abandonment rather than as
+   margin. With the rail carrying weight on the left, a 736px text column inside
+   a 964px content column is balanced by ~220px on each side.
+
+   Figures BLEED back across both columns: the screenshots, the artifact frame,
+   the chain diagram and the comparison table are the page's full-width objects,
+   and the chain diagram in particular has a documented size law (see the 78rem
+   block below) that shrinking it by 19% would break.
+   ------------------------------------------------------------------------- */
+@media (min-width: 78rem) {
+  :root {
+    --rail-indent: calc(var(--rail-w) + var(--rail-gap));
+  }
+
+  .section:not(.section-hero) > .wrap > *,
+  .subsection > * {
+    margin-left: var(--rail-indent);
+  }
+  /* Full-bleed objects, and the two containers that own their own grid. */
+  .section > .wrap > .section-head,
+  .section > .wrap > .subsection,
+  .section > .wrap > .shot,
+  .section > .wrap > .shot-pair,
+  .section > .wrap > .chain-diagram,
+  .subsection > .shot {
+    margin-left: 0;
+  }
+
+  /* The head IS the rail: eyebrow in column one, heading and lede in column two.
+     A head with no eyebrow (the FAQ) simply leaves column one empty. */
+  .section-head {
+    display: grid;
+    grid-template-columns: var(--rail-w) minmax(0, 1fr);
+    column-gap: var(--rail-gap);
+    max-width: none;
+  }
+  .section-head > .eyebrow {
+    grid-column: 1;
+    grid-row: 1;
+    margin-bottom: 0;
+    align-self: start;
+    /* optically on the H2's first baseline rather than its box top */
+    padding-top: 0.7rem;
+  }
+  .section-head > h2 {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .section-head > .lede {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  /* Anything else in a head follows the lede in the content column. Without
+     this it defaults into column one and sets itself under the eyebrow, at
+     rail width. */
+  .section-head > .disclosure {
+    grid-column: 2;
+    grid-row: 3;
+  }
+  /* THE STORY USES ITS RAIL. Everywhere else the rail carries an eyebrow; here
+     the section head has one and the 600px of body copy under it had nothing,
+     so the emptiest composition on the page sat at the exact scroll position a
+     first-time reader decides whether to continue. The signature moves out of
+     the paragraph flow and into that column, level with the opening line. */
+  #story > .wrap {
+    display: grid;
+    grid-template-columns: var(--rail-w) minmax(0, 1fr);
+    column-gap: var(--rail-gap);
+  }
+  #story > .wrap > .section-head {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  #story > .wrap > .story-body {
+    grid-column: 2;
+    grid-row: 2;
+    margin-left: 0;
+  }
+  /* BOTTOM of the rail, not the top of it. Top-aligned, "— Dawid" rendered
+     level with the story's OPENING sentence and 75px under the section
+     eyebrow's rule, wearing an --accent-muted rule of its own — two near
+     identical marks in the same column, and the second one read as a second
+     section label rather than as a sign-off. The box is already stretched to
+     the body's full height, so ending it costs nothing structurally and puts
+     the signature beside the last line, which is where a signature goes. */
+  #story > .wrap > .story-sign {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: end;
+    margin-left: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  /* THE CLOSE IS TWO COLUMNS. The final band ran one narrow column hard against
+     the left edge with the rail empty and ~40% of the band unused to its right,
+     which reads as a leftover block rather than as a close. Ask on the left,
+     answer on the right; the links and the last line run the full width under
+     both. */
+  .section.section-download > .wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: var(--sp-9);
+    align-items: start;
+  }
+  .section.section-download > .wrap > * {
+    margin-left: 0;
+    grid-column: 1;
+  }
+  .section.section-download > .wrap > .platform-status,
+  .section.section-download > .wrap > #mac-signup {
+    grid-column: 2;
+  }
+  .section.section-download > .wrap > .download-title {
+    grid-row: 1;
+  }
+  .section.section-download > .wrap > .btn-lg {
+    grid-row: 2;
+  }
+  .section.section-download > .wrap > .download-microcopy {
+    grid-row: 3;
+  }
+  .section.section-download > .wrap > .platform-status {
+    grid-row: 1 / 3;
+    margin-top: 0.6rem;
+  }
+  /* Spans BOTH of the ask column's closing rows. Pinned to row 3 alone, the
+     signup card (242px) sized that row on its own, so the closing line below it
+     was pushed 175px clear of the fine print it belongs under — a hole in the
+     middle of the ask. Spanning distributes the card's height across the two
+     rows instead of dumping it all into the first. */
+  .section.section-download > .wrap > #mac-signup {
+    grid-row: 3 / 5;
+  }
+  .section.section-download > .wrap > .download-closing {
+    grid-column: 1;
+    grid-row: 4;
+    /* Hug the top of the row. The signup card spans rows 3-5 and sizes them, so
+       a stretched closing line gets pushed to the bottom of a row it does not
+       fill — which reads as a hole in the middle of the ask, not as spacing. */
+    align-self: start;
+    margin-top: var(--sp-3);
+  }
+  .section.section-download > .wrap > .link-row {
+    grid-column: 1 / -1;
+    grid-row: 5;
+  }
+
+  /* NO RAIL INDENT. The comment this replaces said the footer's columns
+     "started 220px to the left of every line of copy above them" — true when it
+     was written, and false since the download band was moved out to the wrap
+     edge (`.section-download > .wrap > * { margin-left: 0 }` above). Indenting
+     the footer against a flush band left an empty 220px rail beside the footer
+     columns and a visible 220px jog at the page's close, between the last
+     .link-row and the first footer column. They align now. */
+}
+
+/* 1248px — the chain diagram hands over to the SVG. The HTML stays in the
+   document as the accessible text (same strings, same order) but stops being
+   drawn.
+
+   This used to happen at 1024px, and it was too early twice over. The SVG is a
+   fixed 1200-unit drawing scaled to whatever box it gets, so at 1024 its body
+   text arrived at about 10.5px — the smallest and least legible text anywhere
+   on the page, in the one figure the section is built around. And a five-column
+   chain plus three annotation rows at that width is cramped on its own terms.
+   Above 78rem the drawing renders at >=95% of its authored size and the HTML
+   stack has stopped being the better picture, so that is where they swap.
+
+   The panel's inline padding drops to --sp-3 here for the same reason: 2rem of
+   padding either side is 64 units of scale the text cannot spare. The vertical
+   padding is unchanged. */
+@media (min-width: 78rem) {
+  .chain-canvas {
+    display: block;
+  }
+  .chain-diagram {
+    padding-inline: var(--sp-3);
+  }
+  .chain-flow {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 72rem) {
+  /* 1152px — the fold becomes a composition: copy left, the app window right,
+     running off the right edge of the viewport instead of sitting inside a
+     gutter. The window is flush to the edge and drops its right border and
+     right radius there, so it reads as continuing rather than as ending. */
+  /* 34rem, not 30rem: the copy gets the dominant share of the fold. */
+  .section-hero > .wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 34rem) minmax(0, 1fr);
+    column-gap: clamp(2.5rem, 4vw, 4rem);
+    align-items: center;
+  }
+  .hero-copy {
+    max-width: none;
+  }
+  /* The desktop override that used to live here pinned the H1 at 50.7px, which
+     is 5% larger than the thirteen H2s below it (48px) and 26% smaller than the
+     closing "Get it." (68px) — no typographic hierarchy at the top of the page
+     at all. --t-h1 (68px at 1440) now applies at every width, and the H1 is the
+     largest type on the page again. */
+  .hero-title {
+    max-width: none;
+  }
+  .hero-lede,
+  .hero-fineprint {
+    max-width: none;
+  }
+  .hero-stage {
+    margin-top: 0;
+    margin-right: calc(var(--bleed-right) * -1);
+  }
+  .hero-stage::before {
+    /* The lamp's own centre sits behind the opaque window; only its falloff is
+       ever on the page, and that falloff peaks below --surface's luminance, so
+       the card stays brighter than the ground it is on. */
+    inset: -40% 0 -50% -34%;
+  }
+  .shot-hero {
+    border-right: 0;
+    border-radius: var(--r-card) 0 0 var(--r-card);
+  }
+  .shot-hero .shot-chrome {
+    padding-right: var(--gutter);
+  }
+}
+
+/* The document's timeline gutter needs room. Below that, the timestamp becomes
+   an ordinary label above its slide and the timeline rule goes away. */
+/* --- Screenshots on a phone ------------------------------------------------
+   Downscaled to ~350 CSS px, a 1440-wide app capture puts the app's own UI text
+   at 4-5px: nine screenshots and several thousand pixels of scroll conveying
+   nothing but texture. Below 48rem each shot is shown at its true 1x inside its
+   own horizontal scroller, so the frame stays put, the page never scrolls
+   sideways, and what is in the picture is legible. */
+@media (max-width: 47.999rem) {
+  .shot-media {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    /* The scroll region is a real one: give it a keyboard/AT-visible edge. */
+    scroll-snap-type: x proximity;
+  }
+  .shot-media img {
+    width: 1184px;
+    max-width: none;
+    scroll-snap-align: start;
+  }
+  .shot-pair-band .shot-media img {
+    width: 1042px;
+  }
+  /* A scroller nobody can see is a broken image. The right edge dissolves into
+     the frame's own surface, which is the standard "there is more this way"
+     signal and costs no copy. Painted over the chrome strip too, where it is
+     invisible because the chrome is the same --surface-2. */
+  .shot {
+    position: relative;
+  }
+  .shot::after {
+    content: "";
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 2.5rem;
+    pointer-events: none;
+    background: linear-gradient(
+      to left,
+      hsl(var(--surface-2)) 0%,
+      hsl(var(--surface-2) / 0) 100%
+    );
+  }
+}
+
+@media (max-width: 39.999rem) {
+  .doc-body {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+  .doc-title {
+    grid-column: 1;
+  }
+  .doc-body::before {
+    display: none;
+  }
+  .doc-p {
+    grid-column: 1;
+  }
+  .doc-slide {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-2);
+  }
+  .doc-time,
+  .doc-slide picture {
+    grid-column: 1;
+  }
+  .doc-time {
+    text-align: left;
+  }
+  .doc-time::after {
+    display: none;
+  }
+}
+
+/* Mobile nav panel — progressive enhancement, only ever shown when JS ran. */
+@media (max-width: 55.999rem) {
+  /* NO JS: the bar grows a second row and the anchors wrap onto it. */
+  .nav-inner {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--nav-h);
+    padding-bottom: var(--sp-2);
+  }
+  .nav-links {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+  /* JS: back to a single-row bar with the panel behind the toggle. */
+  .js .nav-inner {
+    flex-wrap: nowrap;
+    height: var(--nav-h);
+    padding-bottom: 0;
+  }
+  .js .nav-links {
+    display: none;
+    position: absolute;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 0;
+    padding: var(--sp-2) var(--gutter) var(--sp-4);
+    background: hsl(var(--rail));
+    border-bottom: var(--hair);
+  }
+  .js .nav-links[data-open="true"] {
+    display: flex;
+  }
+  /* The toggle takes the free space so it groups with the CTA on the right. */
+  .js .nav-cta {
+    margin-left: var(--sp-2);
+  }
+  .js .nav-links a {
+    justify-content: flex-start;
+    padding-block: var(--sp-3);
+    padding-inline: 0;
+    font-size: var(--t-body);
+  }
+  .js .nav-links a + a {
+    border-top: var(--hair);
+  }
+  /* The sliding rule belongs to the horizontal bar. In the stacked panel the
+     row separators already do that job. */
+  .js .nav-links a::after {
+    display: none;
+  }
+}
+
+/* --- The comparison table, destacked -------------------------------------
+   A five-column table cannot be read on a 390px screen, and a sideways
+   scroller is a way of not solving that: the capability scrolls out of frame
+   the moment you reach the column you wanted to compare, which is the exact
+   moment you need it. So below 56rem — and on paper, where the widest column
+   set is just as unreadable — each ROW becomes a card: the capability is its
+   heading, and the four categories become labelled lines under it.
+
+   The labels come from data-col on each <td> in the markup, so nothing here
+   invents a string: they are the same four category names as the header row,
+   which is itself taken out of the flow because every cell now carries it.
+   The table stays a real <table> throughout — the semantics, the row headers
+   and the reading order are untouched, and this is presentation only. */
+@media (max-width: 55.999rem), print {
+  .table-scroll {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .compare {
+    display: block;
+    min-width: 0;
+  }
+
+  /* Every cell is labelled now, so the header row is redundant on screen —
+     but it stays in the accessibility tree, which is what still associates
+     each cell with its column for a screen reader.
+
+     display:block on the group AND its descendants is load-bearing: a
+     table-header-group ignores the width and height of the sr-only pattern and
+     lays its cells out at their natural table widths regardless, which put 355
+     unclipped pixels of header outside a 320px viewport. */
+  .compare thead,
+  .compare thead tr,
+  .compare thead th {
+    display: block;
+  }
+  .compare thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .compare tbody {
+    display: block;
+  }
+
+  .compare tbody tr {
+    display: block;
+    border: var(--hair);
+    border-radius: var(--r-card);
+    background: hsl(var(--surface));
+    overflow: hidden;
+  }
+  .compare tbody tr + tr {
+    margin-top: var(--sp-4);
+  }
+
+  /* The capability becomes the card's heading. */
+  .compare tbody th {
+    display: block;
+    width: auto;
+    padding: var(--sp-4);
+    font-size: var(--t-body);
+    font-weight: 620;
+    letter-spacing: -0.015em;
+    color: hsl(var(--foreground));
+    background: hsl(var(--surface-2));
+    border-bottom: 1px solid hsl(var(--border-strong));
+  }
+
+  .compare tbody td {
+    display: grid;
+    grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+    gap: var(--sp-2) var(--sp-4);
+    padding: var(--sp-3) var(--sp-4);
+    border-bottom: var(--hair);
+  }
+  .compare tbody td::before {
+    content: attr(data-col);
+    font-weight: 600;
+    color: hsl(var(--fg-subtle));
+  }
+  /* Overrides the desktop rule that strips the last ROW's rules: here the last
+     CELL of every card is the one that must not draw one. */
+  .compare tbody tr td:last-child,
+  .compare tbody tr:last-child td:last-child {
+    border-bottom: 0;
+  }
+
+  /* Sift still reads as the subject — the same brighter surface it gets in the
+     wide table, and its label takes the brighter text rung with it. */
+  .compare tbody td:nth-child(2) {
+    background: hsl(var(--surface-2) / 0.55);
+    color: hsl(var(--fg-secondary));
+  }
+  .compare tbody td:nth-child(2)::before {
+    color: hsl(var(--fg-secondary));
+  }
+
+  /* Row hover was a wide-table affordance for tracking one row across five
+     columns. There is no row to track any more, so each cell is pinned back to
+     its resting fill rather than left to the wide-table hover rule. */
+  .compare tbody tr:hover th {
+    background-color: hsl(var(--surface-2));
+  }
+  .compare tbody tr:hover td {
+    background-color: transparent;
+  }
+  .compare tbody tr:hover td:nth-child(2) {
+    background-color: hsl(var(--surface-2) / 0.55);
+  }
+}
+
+/* Narrow phones cannot give the label 9rem and still leave a measure for the
+   answer, so the pair stacks. */
+@media (max-width: 26rem) {
+  .compare tbody td {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-1);
+  }
+}
+
+/* --- 11. MOTION ------------------------------------------------------------
+
+   Two systems live here.
+
+   A. THE SCROLL REVEAL. Content arrives from 12px below with a hard decelerate
+      and no overshoot, staggered inside whatever group entered together. Only
+      opacity and transform are touched, so nothing here can shift layout or
+      cost a reflow.
+
+   B. THE CHAIN DRAW. The signature diagram builds itself in the order the
+      chain actually runs: input, then the spine drawing left to right, each
+      node landing as the drawing head passes its column, and the competitor
+      stop-points unfurling in its wake. Timings are per-element, declared as
+      `--d` on the SVG node itself, so the sequence is readable in the markup
+      rather than buried in a script.
+
+   THE GATE. Both are scoped to `html.motion`, which the head bootstrap sets
+   only when IntersectionObserver exists and prefers-reduced-motion is not set,
+   and takes back off if main.js never ran. No `.motion`, no hidden state — the
+   page paints in full for readers with JS off, old browsers, or reduced motion
+   turned on. There is no code path where a reveal can leave content invisible.
+   -------------------------------------------------------------------------- */
+
+/* --- A. Scroll reveal -----------------------------------------------------
+
+   IMPORTANT: this selector list is mirrored by REVEAL_SELECTOR in main.js.
+   Change one, change the other. :where() keeps the whole list at the
+   specificity of `.motion` alone, so the single `.is-in` rule below outranks
+   every entry in it without an !important anywhere. */
+
+.motion
+  :where(
+    .hero-copy > *,
+    .hero-stage,
+    .section-head > *,
+    .prose,
+    .pullquote,
+    .honest-note,
+    .cards > .card,
+    .ai-options,
+    .cost-line,
+    .platform-row,
+    .platform-note,
+    .platform-status,
+    .microcopy,
+    .shot:not(.shot-hero),
+    .artifact-frame,
+    .note-caption,
+    .run-record,
+    .release-log,
+    .chain-diagram,
+    .chain-closing,
+    .two-col > .col,
+    .stat-row > .stat,
+    .subsection > .subhead,
+    .install-list > li,
+    .faq,
+    .after-link,
+    .author-link,
+    .download-title,
+    /* .btn-lg, not .btn: the only .btn-lg in this section is the Windows CTA.
+       Plain .btn also catches the Mac card's own link, which sits inside
+       .signup and arrives with it — a control fading in a second time inside a
+       card that has already arrived. */
+    .section-download .btn-lg,
+    .signup,
+    .link-row,
+    .footer-cols > .footer-col,
+    .footer-base
+  ) {
+  opacity: 0;
+  transform: translate3d(0, var(--rv-rise), 0);
+  transition:
+    opacity var(--rv-dur) var(--ease-arrive),
+    transform var(--rv-dur) var(--ease-arrive);
+}
+
+/* A figure has more mass than a line of text, so it travels a little further
+   and takes a little longer to settle. */
+.motion
+  :where(
+    .hero-stage,
+    .shot:not(.shot-hero),
+    .artifact-frame,
+    .chain-diagram,
+    .faq
+  ) {
+  --rv-rise: var(--rv-rise-big);
+  --rv-dur: var(--rv-dur-big);
+}
+
+.motion .is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Anything already on screen at load is an INTRO, not a reveal: it plays once,
+   fast, and is finished before a reader could have scrolled. */
+.motion .is-intro {
+  transition-duration: 400ms;
+}
+
+/* --- B. The chain diagram draws itself ------------------------------------
+
+   Per-element delay comes from `--d` in the markup; `--dur` overrides the
+   default length where a stroke is much longer or much shorter than the rest.
+   `both` fill-mode is what holds the pre-roll state through the delay. */
+
+@keyframes cd-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes cd-fade {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes cd-in {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cd-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes cd-grow {
+  from {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+/* Pre-roll. Every stroke that draws carries pathLength="1", so one dasharray
+   works for the 931-unit track and the 24-unit wall alike. */
+.motion .chain-canvas .cd-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.motion .chain-canvas .cd-fade,
+.motion .chain-canvas .cd-in,
+.motion .chain-canvas .cd-pop,
+.motion .chain-canvas .cd-grow {
+  opacity: 0;
+}
+.motion .chain-canvas .cd-pop {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+.motion .chain-canvas .cd-grow {
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+/* Play. The spine is LINEAR on purpose: a constant-speed drawing head is the
+   only thing that makes "the node lands when the line reaches it" true rather
+   than approximately true. */
+.motion .chain-canvas.is-drawn .cd-draw {
+  animation: cd-draw var(--dur, 420ms) linear var(--d, 0ms) both;
+}
+.motion .chain-canvas.is-drawn .cd-fade {
+  animation: cd-fade var(--dur, 340ms) ease-out var(--d, 0ms) both;
+}
+.motion .chain-canvas.is-drawn .cd-in {
+  animation: cd-in var(--dur, 380ms) var(--ease-arrive) var(--d, 0ms) both;
+}
+.motion .chain-canvas.is-drawn .cd-pop {
+  animation: cd-pop var(--dur, 300ms) var(--ease-out) var(--d, 0ms) both;
+}
+.motion .chain-canvas.is-drawn .cd-grow {
+  animation: cd-grow var(--dur, 320ms) var(--ease-out) var(--d, 0ms) both;
+}
+
+/* --- 12. PRINT --------------------------------------------------------------
+
+   Everything on this page reads from tokens, which means the entire palette can
+   be inverted for paper by redefining the tokens once. That is the whole of the
+   colour work below — no per-component print overrides, because there is no
+   component holding a colour of its own.
+
+   What print drops: the sticky bar, the app screenshots, the unbuilt-asset
+   placeholders, the expand control. Nine dark 1184px screenshots is most of a
+   toner cartridge and none of the argument. What print keeps: every word,
+   including the exported document in full (the viewport's 43rem clamp is
+   released), the chain as its HTML rendering rather than the SVG, the
+   comparison table in the destacked form it uses on phones, and the FAQ with
+   every answer open — main.js forces that on beforeprint, because a closed
+   <details> is not printable by CSS alone in every engine.
+   -------------------------------------------------------------------------- */
+
+@media print {
+  :root {
+    /* Ink on paper, on the same four-rung ladder and in the same roles. Every
+       rung clears 4.5:1 on white. */
+    --background: 0 0% 100%;
+    --rail: 0 0% 100%;
+    --surface: 0 0% 100%;
+    --surface-2: 0 0% 96%;
+    --border: 0 0% 78%;
+    --border-strong: 0 0% 55%;
+
+    --foreground: 0 0% 6%; /* 18.4:1 */
+    --fg-secondary: 0 0% 22%; /*  12.6:1 */
+    --muted-foreground: 0 0% 30%; /*  10.4:1 */
+    --fg-subtle: 0 0% 38%; /*   7.6:1 */
+    --fg-disabled: 0 0% 52%; /*   4.6:1 */
+
+    /* Coral and violet are legible marks on white at these values; they still
+       mean what they mean on screen. */
+    --primary: 14 92% 38%;
+    --primary-lit: 14 92% 38%;
+    --primary-foreground: 0 0% 100%;
+    --accent-muted: 20 62% 36%;
+    --ai: 247 60% 44%;
+
+    --section-y: 1.75rem;
+  }
+
+  @page {
+    margin: 16mm;
+  }
+
+  html {
+    font-size: 11pt;
+  }
+
+  body {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* The five-layer ember wash is the one thing on the page that would print as
+     a full-bleed grey rectangle on every sheet. */
+  .app-canvas {
+    background-image: none;
+  }
+
+  .nav,
+  .skip-link,
+  .nav-toggle,
+  .shot,
+  .shot-pair,
+  .hero-stage,
+  .artifact-fade,
+  .artifact-expand,
+  .chain-canvas,
+  .doc-slide picture {
+    display: none !important;
+  }
+
+  /* The artifact used to print whole, which was reasonable when it was a
+     written example. It is now the real raw export of a 70-minute lecture —
+     26,000px, roughly eighty sheets — so on paper it stays the window it is on
+     screen. Anyone who wants the whole thing has the source link beside it. */
+  .artifact-viewport {
+    height: 30rem;
+    overflow: hidden;
+  }
+
+  /* The chain's HTML rendering is sr-only above 78rem; on paper it is the
+     drawing, so it comes back into the flow. */
+  .chain-flow {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+  }
+
+  /* A slide that has lost its image keeps its timestamp, and a bare timestamp
+     floating in the margin reads as a printing fault. With the slides gone the
+     timeline gutter has nothing to hang off either, so the document collapses
+     to one column of prose. */
+  .doc-slide {
+    display: none;
+  }
+  .doc-body {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+  .doc-body::before {
+    display: none;
+  }
+  .doc-p {
+    grid-column: 1;
+  }
+
+  /* Anything boxed should not be split across a sheet boundary. */
+  .card,
+  .stat,
+  .install-list > li,
+  .faq details,
+  .compare tbody tr,
+  .pullquote,
+  .honest-note,
+  .ai-options li,
+  .chain-node {
+    break-inside: avoid;
+  }
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+  .section {
+    break-before: auto;
+  }
+
+  /* A printed link is a dead end unless it says where it went. Only the
+     standalone link families get the treatment — doing it inside prose would
+     make the prose unreadable, and there are no bare URLs in the prose anyway. */
+  /* Every one of these links already owns its ::after — it is the hairline
+     that grows from the left on hover, or on the CTA the ember glow. Those are
+     absolutely positioned, and two of them are transparent or scaled to zero,
+     so setting `content` alone produced a URL nobody could see. The pseudo has
+     to be handed back to the flow as well. */
+  .cta-row a[href^="http"]::after,
+  .link-row a[href^="http"]::after,
+  .footer-col a[href^="http"]::after,
+  .after-link a[href^="http"]::after,
+  .author-link a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    position: static;
+    inset: auto;
+    width: auto;
+    height: auto;
+    opacity: 1;
+    transform: none;
+    background: none;
+    box-shadow: none;
+    font-family: var(--font-mono);
+    font-size: 0.78em;
+    font-weight: 400;
+    color: hsl(var(--fg-subtle));
+    word-break: break-all;
+  }
+
+  .btn,
+  .btn-primary {
+    color: hsl(var(--foreground));
+    background: none;
+    border: 1px solid hsl(var(--border-strong));
+    box-shadow: none;
+  }
+
+  .footer-cols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Nothing may arrive mid-transition on paper. */
+  .motion :where(*) {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* --- The escape hatch ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Belt and braces. The bootstrap should never set .motion under this query,
+     but if the preference is switched on mid-session the pre-roll states have
+     to resolve to "visible" rather than to "animated from hidden instantly".
+     Scoped to the reveal machinery only — no blanket opacity override. */
+  .motion .chain-canvas .cd-draw {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+  .motion .chain-canvas .cd-fade,
+  .motion .chain-canvas .cd-in,
+  .motion .chain-canvas .cd-pop,
+  .motion .chain-canvas .cd-grow {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Mac notify-me — the Tally trigger.
+
+   Deliberately NOT coral: --primary marks exactly one action on this page and
+   that action is the Windows download. This is a secondary ask sitting a metre
+   away from it, so it takes the quiet treatment and loses the argument on
+   purpose.
+   --------------------------------------------------------------------------- */
+.signup-action {
+  margin-top: 1.25rem;
+}
+.signup-action .btn {
+  min-height: 44px;
+}
+.signup-fineprint {
+  margin-top: 0.875rem;
+  font-size: 0.8125rem;
+  color: hsl(var(--fg-subtle));
+  max-width: 52ch;
+}

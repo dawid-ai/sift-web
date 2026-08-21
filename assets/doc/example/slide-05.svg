@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 216" width="384" height="216" role="presentation">
+<rect width="384" height="216" fill="#F4F1EC"/>
+<g font-family="Helvetica, Arial, sans-serif">
+<text x="26" y="34" font-size="17" font-weight="700" fill="#1D1916">Best before is a guess</text>
+<line x1="26" y1="46" x2="358" y2="46" stroke="#D8D2C9" stroke-width="1"/>
+<text x="26" y="96" font-size="24" font-weight="700" fill="#1D1916">Still fine.</text>
+<text x="26" y="124" font-size="12" fill="#B4643A">Probably for another week, and you can tell.</text>
+<text x="26" y="158" font-size="9.5" fill="#8A8078">It is the maker&#8217;s opinion about when it stops being at its best.</text>
+<text x="26" y="174" font-size="9.5" fill="#8A8078">Look at it. Smell it. That is the whole test.</text>
+<text x="26" y="200" font-size="8.5" letter-spacing="0.12em" fill="#8A8078">THE LECTURE ROOM</text>
+</g>
+</svg>

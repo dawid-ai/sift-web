@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 216" width="384" height="216" role="presentation">
+<rect width="384" height="216" fill="#F4F1EC"/>
+<g font-family="Helvetica, Arial, sans-serif">
+<text x="26" y="34" font-size="17" font-weight="700" fill="#1D1916">Where it actually goes</text>
+<line x1="26" y1="46" x2="358" y2="46" stroke="#D8D2C9" stroke-width="1"/>
+<text x="26" y="72" font-size="10" fill="#4A443E">homes</text>
+<rect x="112" y="62" width="196" height="13" rx="2" fill="#B4643A"/>
+<text x="314" y="72" font-size="9.5" fill="#8A8078">40%</text>
+<text x="26" y="96" font-size="10" fill="#4A443E">restaurants</text>
+<rect x="112" y="86" width="118" height="13" rx="2" fill="#C79A79"/>
+<text x="236" y="96" font-size="9.5" fill="#8A8078">24%</text>
+<text x="26" y="120" font-size="10" fill="#4A443E">farms</text>
+<rect x="112" y="110" width="118" height="13" rx="2" fill="#C79A79"/>
+<text x="236" y="120" font-size="9.5" fill="#8A8078">24%</text>
+<text x="26" y="144" font-size="10" fill="#4A443E">shops</text>
+<rect x="112" y="134" width="59" height="13" rx="2" fill="#C79A79"/>
+<text x="177" y="144" font-size="9.5" fill="#8A8078">12%</text>
+<text x="26" y="174" font-size="9.5" fill="#8A8078">The biggest bin in the country is the one in your kitchen.</text>
+<text x="26" y="200" font-size="8.5" letter-spacing="0.12em" fill="#8A8078">THE LECTURE ROOM</text>
+</g>
+</svg>

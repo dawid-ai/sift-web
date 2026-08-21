@@ -1,0 +1,2114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Sift — save the video, keep the words</title>
+    <meta
+      name="description"
+      content="Sift saves videos from YouTube, X, LinkedIn, TikTok and about a thousand other places, writes down everything said in them, and turns that into a summary you can use. Free, and it all stays on your computer."
+    />
+
+    <link rel="canonical" href="https://sift.dawid.ai/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Sift" />
+    <meta property="og:url" content="https://sift.dawid.ai/" />
+    <meta property="og:title" content="Save the video. Keep the words." />
+    <meta
+      property="og:description"
+      content="One link in: the video, everything said in it, a short version you can skim, and a library you can search. Free, and it all stays on your computer."
+    />
+    <!-- Built by web/tools/make-og.cjs. Absolute on purpose: OG scrapers do not
+         resolve a relative path. -->
+    <meta property="og:image" content="https://sift.dawid.ai/assets/og.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Sift showing the slides it pulled out of a recorded talk, as a row of thumbnails with the time each one appeared."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Save the video. Keep the words." />
+    <meta
+      name="twitter:description"
+      content="One link in: the video, everything said in it, a short version you can skim, and a library you can search. Free, and it all stays on your computer."
+    />
+    <meta name="twitter:image" content="https://sift.dawid.ai/assets/og.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Sift showing the slides it pulled out of a recorded talk, as a row of thumbnails with the time each one appeared."
+    />
+
+    <meta name="theme-color" content="#0B0A09" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="author" content="Dawid Jóźwiak" />
+
+    <!-- Favicon: the app's corner-mark, inline. --accent-muted only; coral is
+         spent on the CTA and on active state. -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B0A09'/%3E%3Cg fill='none' stroke='%23CF764A' stroke-width='2.2' stroke-linecap='square'%3E%3Cpath d='M7 12V7h5'/%3E%3Cpath d='M25 20v5h-5'/%3E%3C/g%3E%3Crect x='12.5' y='12.5' width='7' height='7' rx='1.6' fill='%23CF764A'/%3E%3C/svg%3E"
+    />
+
+    <!-- Preloads the two faces the fold actually opens with. `crossorigin` is
+         required even same-origin, or the preload warms a cache entry the font
+         request then misses. -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="assets/fonts/inter-latin-wght-normal.woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="assets/fonts/jetbrains-mono-latin-wght-normal.woff2"
+      crossorigin
+    />
+
+    <link rel="stylesheet" href="assets/tokens.css" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Motion bootstrap, before first paint. `js` gates the mobile nav panel;
+         `motion` gates the scroll-reveal system, and is taken back off after 2s
+         if main.js never reports ready — a hidden element must never become a
+         permanent hole. -->
+    <script>
+      (function () {
+        var root = document.documentElement;
+        root.classList.add("js");
+        var still =
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if ("IntersectionObserver" in window && !still) {
+          root.classList.add("motion");
+          window.setTimeout(function () {
+            if (!root.hasAttribute("data-reveal-ready"))
+              root.classList.remove("motion");
+          }, 2000);
+        }
+      })();
+    </script>
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Sift",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Windows",
+        "softwareVersion": "0.6.2",
+        "url": "https://sift.dawid.ai/",
+        "image": "https://sift.dawid.ai/assets/og.png",
+        "description": "Sift saves videos from YouTube, X, LinkedIn, TikTok and about a thousand other places, writes down everything said in them, and turns that into a summary you can use. Everything lands on your computer and stays there. Free, Windows.",
+        "license": "https://github.com/dawid-ai/sift/blob/master/LICENSE",
+        "downloadUrl": "https://github.com/dawid-ai/sift/releases/latest/download/Sift-Setup.exe",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": 0,
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Dawid Jóźwiak",
+          "url": "https://dawid.ai"
+        }
+      }
+    </script>
+  </head>
+
+  <body class="app-canvas">
+    <!-- Points at <main>, not at the hero section: <main> carries tabindex="-1"
+         so activating this actually MOVES focus rather than only scrolling,
+         which is the difference between a skip link and a jump link. -->
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <!-- ===================================================================
+         NAV — deck section 18
+         =================================================================== -->
+    <header class="nav" id="nav">
+      <div class="nav-inner">
+        <a class="nav-logo" href="#hero" aria-label="Sift — top of page">
+          <span class="corner-mark nav-wordmark">Sift</span>
+        </a>
+
+        <button
+          class="nav-toggle"
+          type="button"
+          aria-expanded="false"
+          aria-controls="nav-links"
+        >
+          <span class="nav-toggle-bars" aria-hidden="true"></span>
+          <span class="sr-only">Menu</span>
+        </button>
+
+        <nav class="nav-links" id="nav-links" aria-label="Sections">
+          <a href="#story">Why</a>
+          <a href="#artifact">See an example</a>
+          <a href="#chain">What you get</a>
+          <a href="#slides">Slides</a>
+          <a href="#library">Library</a>
+          <a href="#price">Price</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+
+        <!-- Quiet until the hero CTA scrolls away, then main.js promotes it.
+             One coral object on screen at a time. -->
+        <a
+          class="btn btn-quiet btn-sm nav-cta"
+          href="https://github.com/dawid-ai/sift/releases/latest/download/Sift-Setup.exe"
+          >Download</a
+        >
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <!-- ===================================================================
+           1. HERO
+           =================================================================== -->
+      <section class="section section-hero" id="hero">
+        <div class="wrap">
+          <div class="hero-copy">
+            <h1 class="hero-title">
+              Save the video. <br class="br-lg" />Keep the words.
+            </h1>
+            <p class="lede hero-lede">
+              Sift downloads videos from YouTube, X, LinkedIn, TikTok and a
+              thousand other places, writes down everything said in them, and
+              turns that into a summary you can actually use. Everything lands
+              on your computer and stays there.
+            </p>
+
+            <div class="cta-row">
+              <a
+                class="btn btn-primary"
+                href="https://github.com/dawid-ai/sift/releases/latest/download/Sift-Setup.exe"
+                >Download for Windows — free</a
+              >
+              <a class="link-cta" href="#story">Why I made it →</a>
+            </div>
+
+            <p class="hero-fineprint">
+              <span class="hero-fineprint-line"
+                >Free, forever. No account, nothing to sign up for.</span
+              >
+              <span class="hero-fineprint-line"
+                >Windows today. Linux is coming. Mac if enough people ask.</span
+              >
+            </p>
+          </div>
+
+          <!-- Every shot: WebP srcset ladder, with a DERIVED 1x PNG as the <img>
+               fallback (never the raw capture). width/height are the fallback
+               file's own, so the reserved box matches what arrives. -->
+          <div class="hero-stage">
+            <figure class="shot shot-hero" id="shot-home">
+              <div class="shot-chrome" aria-hidden="true">
+                <span class="corner-mark shot-chrome-mark"></span>
+                <span class="shot-chrome-name">Sift</span>
+                <span class="shot-chrome-controls"><i></i><i></i><i></i></span>
+              </div>
+              <div class="shot-media">
+                <picture>
+                  <source
+                    type="image/webp"
+                    srcset="
+                      assets/shots/gen/hero-home-640.webp   640w,
+                      assets/shots/gen/hero-home-1100.webp 1100w,
+                      assets/shots/gen/hero-home-1680.webp 1680w
+                    "
+                    sizes="(max-width: 47.999rem) 1184px, (min-width: 72rem) 54vw, (min-width: 50rem) calc(100vw - 5rem), 92vw"
+                  />
+                  <img
+                    src="assets/shots/gen/hero-home-1400.png"
+                    width="1400"
+                    height="875"
+                    fetchpriority="high"
+                    decoding="async"
+                    alt="Sift's home screen with a video link pasted in, showing the title, thumbnail, channel and the quality options, ready to save."
+                  />
+                </picture>
+              </div>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           1b. THE STORY — the only place on the page that speaks as "I".
+           =================================================================== -->
+      <section class="section section-tight section-no-rule" id="story">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Why</p>
+            <h2>I built this for myself.</h2>
+          </header>
+
+          <div class="prose story-body">
+            <p class="story-open">
+              I kept saving videos I was never going to watch again. Talks,
+              interviews, long podcasts, things I'd need one specific line out
+              of six months later. They piled up in tabs and playlists and I
+              never found anything twice.
+            </p>
+            <p>
+              So I made something that took a link and gave me back the video,
+              everything said in it, and a short version I could skim. Then I
+              kept adding the parts I wanted next. A place to keep it all. A way
+              to search it. A way to pull the slides out of a talk. Eventually
+              it was a real app, so I spent a while making it look like one.
+            </p>
+            <p>
+              That's the whole story. It does what I needed it to do, it's free,
+              and it's yours if it's useful to&nbsp;you&nbsp;too.
+            </p>
+          </div>
+
+          <p class="story-sign"><span>— Dawid</span></p>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           2. THE EXAMPLE EXPORT
+           =================================================================== -->
+      <section class="section section-major" id="artifact">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">An example</p>
+            <h2>This is one talk, after Sift.</h2>
+            <p class="lede">
+              A talk somebody recorded, saved and written out. Every word, and
+              every slide dropped in at the moment it went up on screen. You can
+              read it, search it, or send it to someone who wasn't there.
+            </p>
+            <p class="disclosure">
+              The talk is made up. I didn't want to put invented words in a
+              real speaker's mouth — but the document itself is exactly the
+              shape Sift gives you.
+            </p>
+          </header>
+
+          <figure class="artifact-frame" id="asset-doc">
+            <figcaption class="frame-label">
+              <span
+                >An example of what you get. Save it as a PDF or a text
+                file.</span
+              >
+              <span class="frame-meta">Example</span>
+            </figcaption>
+
+            <div class="artifact-stage">
+              <div class="artifact-viewport" id="asset-doc-viewport">
+                <article class="doc">
+                  <!-- ARTIFACT:BEGIN -->
+                  <div class="doc-body">
+                    <p class="doc-title">
+                      Why we throw away a third of our food
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">00:00</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-01.svg"
+                          width="384"
+                          height="216"
+                          decoding="async"
+                          alt="Opening slide reading “A third of it — why most of the food we buy is never eaten”."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      Right — thanks for having me. This is a talk about the
+                      food we buy and never eat, which sounds like a small
+                      subject and isn't. Roughly a third of it ends up in a bin
+                      somewhere between a field and a fork. I'm going to spend
+                      most of the hour on the last few feet of that journey,
+                      which is your kitchen, because that's the part any of us
+                      can actually do something about this week.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">01:48</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-02.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Slide headed “Where it actually goes”, a bar chart giving homes 40 per cent, restaurants 24, farms 24 and shops 12."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      So here's where it goes, and the first time I saw this I
+                      had it completely the wrong way round. I assumed most of
+                      it was lost out at the farm, or thrown out by shops at
+                      closing time. Some of it is. But the biggest single share
+                      is thrown away by people at home, after they've already
+                      paid for it. That's the part that surprises everybody,
+                      including me, and it's the reason this isn't a talk about
+                      supermarkets.
+                    </p>
+                    <p class="doc-p">
+                      And I want to be very clear that this is not a talk about
+                      you being careless. Nobody is careless. It's that the
+                      sensible-feeling decision — one big shop, buy a bit extra,
+                      better too much than too little — quietly produces a bin
+                      full of food, every week, for years.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">04:26</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-03.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Bar chart headed “What is in a household bin”, with bread far taller than salad, fruit, milk and leftovers."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      This is what's actually in it, roughly in order. Bread
+                      first, every time, by a distance. Then salad, then fruit,
+                      then milk, and leftovers a long way behind. And you'll
+                      notice none of those are expensive. That's part of why it
+                      stays invisible — you're not throwing away one thing you'd
+                      notice, you're throwing away eight things you wouldn't.
+                    </p>
+                    <p class="doc-p">
+                      Bread is first for a very boring reason. It's the one
+                      thing we buy in a quantity nobody chose. A loaf is a loaf.
+                      If two of you eat four slices a day, a large loaf is
+                      already more days than it's going to last.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">07:52</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-04.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Slide headed “Three dates on a packet”, showing Best before, Use by and Display until side by side, with Use by highlighted."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      Right. The single most useful five minutes of this talk.
+                      There are three dates on a packet, they mean completely
+                      different things, and most of us treat all three as the
+                      same instruction.
+                    </p>
+                    <p class="doc-p">
+                      Display until is for the person filling the shelf. It has
+                      nothing to do with you at all. Best before is about
+                      quality. Use by is about safety. Only one of those three
+                      is telling you something you have to obey.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">11:15</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-05.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Slide headed “Best before is a guess”, reading “Still fine — probably for another week, and you can tell”."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      Best before is somebody's estimate of when the thing stops
+                      being at its best. Not when it becomes dangerous — when it
+                      stops being lovely. It's an opinion formed months earlier
+                      about a jar that has since sat in your cupboard in
+                      conditions nobody could have predicted. You're allowed to
+                      overrule it, and you already own the equipment: look at
+                      it, and smell it.
+                    </p>
+                    <p class="doc-p">
+                      The place I'd push back hardest is dried food. Pasta,
+                      rice, tins, flour. Those dates are very nearly decorative,
+                      and an enormous amount of perfectly good food gets thrown
+                      out on the strength of them.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">14:40</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-06.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Slide headed “Use by is the one that means it”, calling out meat, fish and anything already cooked."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      Use by is the one that means it. Meat, fish, anything
+                      already cooked, anything that's been opened. That date is
+                      about bacteria you can't see, can't smell and won't be
+                      able to judge by looking — which is exactly why somebody
+                      had to print a date on it for you.
+                    </p>
+                    <p class="doc-p">
+                      But here's the bit nobody tells you: freezing stops the
+                      clock. If you get to the morning of the use-by date and
+                      you already know it isn't getting eaten, freeze it that
+                      day and the date stops counting. That one habit is worth
+                      more than everything else on this slide put together.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">18:03</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-07.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Slide headed “Your fridge is probably too warm”, marking five degrees against the seven most fridges run at."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      Then there's the thing sitting in your kitchen doing the
+                      actual work, which almost nobody has ever checked. A
+                      fridge wants to be about five degrees. Most of the ones
+                      anyone has measured are running at seven, because the dial
+                      says one to five and nobody has ever been told what those
+                      numbers are supposed to mean.
+                    </p>
+                    <p class="doc-p">
+                      Two degrees doesn't sound like much. On a bag of salad
+                      it's about three days. On a pint of milk it's about two.
+                      You can have those back tonight for the price of turning a
+                      dial once.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">21:37</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-08.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Slide headed “Buy less, more often”, reading “The big shop is where the waste is decided”."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      The other half of it isn't in the kitchen at all, it's in
+                      the shop. The big weekly shop is where most of the waste
+                      is actually decided, several days before it happens.
+                      You're standing in an aisle on a Saturday morning making a
+                      prediction about Thursday evening, and you have no idea
+                      what Thursday evening is going to be like.
+                    </p>
+                    <p class="doc-p">
+                      Nobody is good at this. I'm not good at this and I'm the
+                      one giving the talk. Smaller and more often beats bigger
+                      and less often every time, and it takes no willpower at
+                      all — it just moves the decision to the day it's about.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">25:10</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-09.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Slide headed “What we changed, in one house”, listing four changes: the fridge, one shelf, bread in the freezer, no bagged salad."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      So — four things, in one house, over six weeks. We turned
+                      the fridge down. We cleared one shelf and put everything
+                      that needed eating on it, at eye level. Bread went
+                      straight into the freezer, sliced, so you take out what
+                      you want. And we stopped buying salad in bags, because we
+                      finally admitted we were throwing away three quarters of
+                      every one.
+                    </p>
+                    <p class="doc-p">
+                      None of that is clever and none of it took longer than one
+                      evening. That's rather the point. Everything in this talk
+                      that worked was boring.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">29:44</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-10.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Chart headed “Six weeks later”, showing food binned falling from forty-one pounds a week to sixteen."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      And that's the result. Forty-one pounds a week of food
+                      going in the bin, down to about sixteen. I want to be
+                      honest that this is one house and I was the one counting,
+                      so treat the number as a shape rather than a measurement.
+                      But the shape wasn't subtle. It wasn't five per cent.
+                    </p>
+                    <figure class="doc-slide">
+                      <span class="doc-time">33:02</span>
+                      <picture
+                        ><img
+                          src="assets/doc/example/slide-11.svg"
+                          width="384"
+                          height="216"
+                          loading="lazy"
+                          decoding="async"
+                          alt="Closing slide headed “Three things to take away”."
+                      /></picture>
+                    </figure>
+                    <p class="doc-p">
+                      So. Only “use by” is about safety, and the freezer stops
+                      that clock. Turn the fridge down two degrees tonight,
+                      before you forget I said it. And buy for the next three
+                      days rather than the next nine, because you genuinely
+                      don't know what you're going to want on Thursday. That's
+                      what I've got. I think we've got a few minutes for
+                      questions.
+                    </p>
+                  </div>
+                  <!-- ARTIFACT:END -->
+                </article>
+              </div>
+              <span class="artifact-fade" aria-hidden="true"></span>
+            </div>
+
+            <button
+              class="btn btn-quiet artifact-expand"
+              type="button"
+              data-expanded="false"
+              data-label-collapsed="Read the whole thing"
+              data-label-expanded="Collapse"
+            >
+              Read the whole thing
+            </button>
+          </figure>
+
+          <div class="artifact-after">
+            <p class="note-caption">
+              Nobody took a screenshot and nobody typed any of this out. You
+              paste a link, and this is what comes back — every word that was
+              said, with each slide dropped in at the moment it went up.
+            </p>
+
+            <!-- THREE ROWS, NOT FIVE. "What it was" restated the document's own
+                 title and "Small print" restated both the .frame-meta chip and
+                 the disclosure in the section head; the table's extra height was
+                 also what held the caption column open against 240px of nothing.
+                 The duration moved into the first row, where it earns its keep. -->
+            <dl class="run-record">
+              <div class="run-row">
+                <dt>The transcript</dt>
+                <dd>All 41:20 of it, with the time each line was said</dd>
+              </div>
+              <div class="run-row">
+                <dt>The slides</dt>
+                <dd>Forty-odd pictures checked, eleven worth keeping</dd>
+              </div>
+              <div class="run-row">
+                <dt>What you save</dt>
+                <dd>
+                  One document — a PDF, or a plain text file you can paste
+                  anywhere
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           3. WHAT YOU GET
+           =================================================================== -->
+      <section class="section" id="chain">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">What you get</p>
+            <h2>One link in. Four things out.</h2>
+            <p class="lede">
+              You paste one thing and walk away. Four things are waiting when
+              you come back, and they're all in the same place.
+            </p>
+          </header>
+
+          <!-- Two renderings, one shown at a time: .chain-canvas is the wide-screen
+               SVG (aria-hidden, a picture of the text below it); .chain-flow is the
+               same content as HTML, and is the mobile rendering and the accessible
+               text. Spine neutral, glyphs --accent-muted, no coral. -->
+          <figure class="chain-diagram" id="chain-diagram">
+            <div class="chain-canvas" aria-hidden="true">
+              <svg
+                class="chain-svg"
+                viewBox="0 68 1200 238"
+                role="presentation"
+                focusable="false"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <!-- the input: a different shape, and deliberately unnumbered -->
+                <rect
+                  class="cd-chip cd-fade"
+                  x="30"
+                  y="112"
+                  width="228"
+                  height="176"
+                  rx="12"
+                />
+                <text class="cd-kicker cd-in" style="--d: 80ms" x="46" y="150">
+                  YOU PASTE
+                </text>
+                <text
+                  class="cd-node-label cd-in"
+                  style="--d: 120ms"
+                  x="46"
+                  y="182"
+                >
+                  A link, or a file you
+                  <tspan x="46" dy="21">already have</tspan>
+                </text>
+                <text class="cd-detail cd-in" style="--d: 160ms" x="46" y="231">
+                  Paste it in, or drop a
+                  <tspan x="46" dy="18">video or audio file onto</tspan>
+                  <tspan x="46" dy="18">the window.</tspan>
+                </text>
+
+                <!-- the spine: this is Sift, and it runs the whole way. It draws
+                     itself LINEARLY over 800ms, which is what lets every node be
+                     timed off the moment the drawing head reaches its column. -->
+                <line
+                  class="cd-spine cd-draw"
+                  style="--d: 180ms; --dur: 800ms"
+                  pathLength="1"
+                  x1="258"
+                  y1="200"
+                  x2="976"
+                  y2="200"
+                />
+
+                <!-- 1 · the video — the spine reaches x=316 at 242ms -->
+                <text
+                  class="cd-node-label cd-in"
+                  style="--d: 312ms"
+                  x="302"
+                  y="100"
+                >
+                  The video
+                </text>
+                <text
+                  class="cd-detail cd-in"
+                  style="--d: 352ms"
+                  x="302"
+                  y="124"
+                >
+                  Saved on your drive, in
+                  <tspan x="302" dy="18">the quality you pick.</tspan>
+                  <tspan x="302" dy="18">Yours to keep.</tspan>
+                </text>
+                <circle
+                  class="cd-dot cd-pop"
+                  style="--d: 242ms"
+                  cx="316"
+                  cy="200"
+                  r="13"
+                />
+                <text
+                  class="cd-num cd-fade"
+                  style="--d: 292ms"
+                  x="316"
+                  y="204.5"
+                >
+                  1
+                </text>
+
+                <!-- 2 · every word — reached at 488ms -->
+                <text
+                  class="cd-node-label cd-in"
+                  style="--d: 558ms"
+                  x="531"
+                  y="100"
+                >
+                  Every word
+                </text>
+                <text
+                  class="cd-detail cd-in"
+                  style="--d: 598ms"
+                  x="531"
+                  y="124"
+                >
+                  Written down, with the
+                  <tspan x="531" dy="18">time beside every line,</tspan>
+                  <tspan x="531" dy="18">even with no captions.</tspan>
+                  <tspan x="531" dy="18">Click a line to jump.</tspan>
+                </text>
+                <circle
+                  class="cd-dot cd-pop"
+                  style="--d: 488ms"
+                  cx="545"
+                  cy="200"
+                  r="13"
+                />
+                <text
+                  class="cd-num cd-fade"
+                  style="--d: 538ms"
+                  x="545"
+                  y="204.5"
+                >
+                  2
+                </text>
+
+                <!-- 3 · the short version — reached at 733ms -->
+                <text
+                  class="cd-node-label cd-in"
+                  style="--d: 803ms"
+                  x="742"
+                  y="100"
+                >
+                  The short version
+                </text>
+                <text
+                  class="cd-detail cd-in"
+                  style="--d: 843ms"
+                  x="742"
+                  y="124"
+                >
+                  A summary, chapters,
+                  <tspan x="742" dy="18">notes, whatever you</tspan>
+                  <tspan x="742" dy="18">want out of it.</tspan>
+                </text>
+                <circle
+                  class="cd-dot cd-pop"
+                  style="--d: 733ms"
+                  cx="756"
+                  cy="200"
+                  r="13"
+                />
+                <text
+                  class="cd-num cd-fade"
+                  style="--d: 783ms"
+                  x="756"
+                  y="204.5"
+                >
+                  3
+                </text>
+
+                <!-- 4 · a library — reached at 979ms -->
+                <text
+                  class="cd-node-label cd-in"
+                  style="--d: 1049ms"
+                  x="962"
+                  y="100"
+                >
+                  A library
+                </text>
+                <text
+                  class="cd-detail cd-in"
+                  style="--d: 1089ms"
+                  x="962"
+                  y="124"
+                >
+                  All of it searchable, for
+                  <tspan x="962" dy="18">the day you can only</tspan>
+                  <tspan x="962" dy="18">half-remember the</tspan>
+                  <tspan x="962" dy="18">phrase.</tspan>
+                </text>
+                <circle
+                  class="cd-dot cd-pop"
+                  style="--d: 979ms"
+                  cx="976"
+                  cy="200"
+                  r="13"
+                />
+                <text
+                  class="cd-num cd-fade"
+                  style="--d: 1029ms"
+                  x="976"
+                  y="204.5"
+                >
+                  4
+                </text>
+              </svg>
+            </div>
+
+            <div class="chain-flow">
+              <div class="chain-input">
+                <p class="chain-input-kicker">You paste</p>
+                <h3 class="chain-label">A link, or a file you already have</h3>
+                <p class="chain-detail">
+                  Paste it in, or drop a video or audio file onto the window.
+                </p>
+              </div>
+
+              <ol class="chain-nodes">
+                <li class="chain-node" id="chain-node-1">
+                  <span class="chain-num" aria-hidden="true">1</span>
+                  <h3 class="chain-label">The video</h3>
+                  <p class="chain-detail">
+                    Saved on your drive, in the quality you pick. Yours to keep.
+                  </p>
+                </li>
+                <li class="chain-node" id="chain-node-2">
+                  <span class="chain-num" aria-hidden="true">2</span>
+                  <h3 class="chain-label">Every word</h3>
+                  <p class="chain-detail">
+                    Written down, with the time next to every line — even when
+                    the video has no captions. Click a line and the video jumps
+                    there.
+                  </p>
+                </li>
+                <li class="chain-node" id="chain-node-3">
+                  <span class="chain-num" aria-hidden="true">3</span>
+                  <h3 class="chain-label">The short version</h3>
+                  <p class="chain-detail">
+                    A summary, chapters, notes, whatever you want out of it.
+                  </p>
+                </li>
+                <li class="chain-node" id="chain-node-4">
+                  <span class="chain-num" aria-hidden="true">4</span>
+                  <h3 class="chain-label">A library</h3>
+                  <p class="chain-detail">
+                    All of it searchable, for the day you can only half-remember
+                    the phrase.
+                  </p>
+                </li>
+              </ol>
+            </div>
+          </figure>
+
+          <p class="prose chain-closing">
+            You don't do any of the steps in between, and nothing gets uploaded
+            to me on the way.
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           3b. PLATFORMS
+           =================================================================== -->
+      <section class="section section-tight section-no-rule" id="platforms">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Where from</p>
+            <h2>Works nearly everywhere.</h2>
+          </header>
+
+          <ul class="platform-row">
+            <li>YouTube</li>
+            <li>X</li>
+            <li>LinkedIn</li>
+            <li>TikTok</li>
+            <li>Instagram</li>
+            <li>Vimeo</li>
+            <li>Twitch</li>
+            <li>Reddit</li>
+            <li>Facebook</li>
+            <li>SoundCloud</li>
+            <li>Dailymotion</li>
+            <li class="platform-more">and about a thousand more</li>
+          </ul>
+
+          <p class="prose platform-note">
+            If you can watch it, Sift can usually save it. Things behind a login
+            — members-only videos, anything age-checked — work too: you sign in
+            once, in a window inside Sift, and it stays signed in on your
+            computer until the site logs you out.
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           4. SLIDES
+           =================================================================== -->
+      <section class="section section-major" id="slides">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Slides</p>
+            <h2>Turn a talk into notes.</h2>
+          </header>
+
+          <div class="prose">
+            <p>
+              Point Sift at a recorded talk and it finds the slides — the real
+              pictures of them, charts and text and all. It throws away the
+              duplicates, so a slide left up for two minutes gives you one
+              picture. Then it hands you a document: everything that was said,
+              with each slide dropped in at the moment it went up.
+            </p>
+            <p>
+              It's the difference between a 70-minute video and something you
+              can read in ten.
+            </p>
+            <p>
+              What you get first is a strip of slides you tidy up by clicking.
+              Keep one, drop one, crop one, or grab the picture that's on screen
+              right now if a good one got missed. Then save the whole thing as a
+              document: the words with the slides in them, exactly as spoken. If
+              you'd rather have it tidied into something more readable, that's a
+              different button.
+            </p>
+          </div>
+
+          <blockquote class="pullquote">
+            <p>
+              Every slide lands at the second it appeared. Ask for the tidied-up
+              version and the writing gets smoothed out around them — a slide
+              can shift to where it makes more sense to read, but none of them
+              go missing.
+            </p>
+          </blockquote>
+
+          <div class="prose">
+            <p>
+              This is the part nothing else does for you: it needs the video and
+              every word said in it, side by side. I haven't found anything else
+              that has both.
+            </p>
+          </div>
+
+          <!-- SHOT-SLIDES. A BAND, not a window — the second one on the page,
+               after the library table. The capture is framed on the row this
+               section is actually about ("4 of 4 selected for the document")
+               and the strip of slides under it; the panel's extraction toolbar
+               is scrolled out of the window rather than cropped, because it was
+               the most technical block of text on the page sitting three inches
+               under prose that avoids every one of those words. A 3.53 strip is
+               not a desktop window, so it does not wear window chrome. -->
+          <figure class="shot" id="shot-slides">
+            <div class="shot-media">
+              <picture>
+                <source
+                  type="image/webp"
+                  srcset="
+                    assets/shots/gen/detail-slides-720.webp   720w,
+                    assets/shots/gen/detail-slides-1400.webp 1400w,
+                    assets/shots/gen/detail-slides-2040.webp 2040w
+                  "
+                  sizes="(max-width: 47.999rem) 1184px, (min-width: 79rem) 1184px, (min-width: 50rem) calc(100vw - 5rem), 92vw"
+                />
+                <img
+                  src="assets/shots/gen/detail-slides-1184.png"
+                  width="1184"
+                  height="335"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Sift showing the slides it pulled out of a recorded talk as a strip of thumbnails, each with the time it appeared and a tick saying it will go in the document."
+                />
+              </picture>
+            </div>
+          </figure>
+
+          <ul class="cards cards-3">
+            <li class="card">
+              <h3>No duplicates</h3>
+              <p>
+                A slide left up for a minute gives you one picture, not sixty.
+                The near-identical ones are gone before you ever see them.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Only the ones with something on them</h3>
+              <p>
+                Sift reads each picture, and the ones with no words or numbers
+                on them get dropped.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Or just the pictures</h3>
+              <p>
+                “Save slides…” saves the slides you kept as full-size pictures,
+                in case you want them outside the document.
+              </p>
+            </li>
+          </ul>
+
+          <div class="honest-note">
+            <p>
+              Being honest about the messy part: a recording that keeps cutting
+              back to the speaker and the audience gives you some pictures of a
+              room. There's a setting that throws out the wide shots
+              automatically. Beyond that, it's a few seconds of clicking to drop
+              the ones you don't want.
+            </p>
+          </div>
+
+          <p class="microcopy">
+            The slide pictures live in Sift's own folder rather than sitting
+            next to your video — there's a button on every video that opens the
+            folder if you want them.
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           5. WHERE THE WORDS COME FROM
+           =================================================================== -->
+      <section class="section section-tight" id="transcripts">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow eyebrow-ai">The words</p>
+            <h2>Even when there are no captions.</h2>
+          </header>
+
+          <div class="prose">
+            <p>
+              If the video already has captions, Sift just takes them. That's
+              instant, and it's as good as whoever wrote them — a proper caption
+              track is better than anything a machine will give you, and an
+              automatic one comes with the mistakes you'd expect.
+            </p>
+            <p>
+              If there are no captions at all, Sift listens to the video and
+              writes down what's said. That part is AI, and it runs on your own
+              computer rather than on somebody's service, so nothing is sent
+              anywhere for it. Either way you end up with a transcript — every
+              word, with the time it was said — which is what makes the video
+              clickable and the slide document possible.
+            </p>
+            <p>
+              It isn't English-only. Other languages work, and you can tell Sift
+              which ones you care about instead of leaving it to guess.
+            </p>
+          </div>
+
+          <!-- The timing range below also appears in the FAQ; the two have to move
+               together. Provenance: docs/web-build-notes.md. -->
+          <div class="honest-note honest-note-ai">
+            <p>
+              Two honest things about that. It isn't instant — your computer is
+              doing the listening, so a one-hour talk with no captions takes ten
+              or fifteen minutes on a fast desktop. On a laptop I'd expect
+              roughly half an hour to forty-five minutes, though I haven't timed
+              one. You can start a batch and go and do something else.
+            </p>
+            <p>
+              The first time it has to listen to something, there's a one-off
+              half-gigabyte download. After that it works with no internet at
+              all, and the audio never goes anywhere.
+            </p>
+          </div>
+
+          <ul class="cards cards-2">
+            <li class="card">
+              <h3>Files you already have</h3>
+              <p>
+                Drag a video or an audio file onto the window and it skips
+                straight to being written down. Your file isn't copied or moved
+                — Sift reads it where you keep it, and removing it from the
+                library leaves the original where it was.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Subtitles, if you want them</h3>
+              <p>
+                A transcript can be saved as a subtitle file, one click. Drop it
+                next to the video and it plays with the words on screen, in
+                whatever you watch things in. Handy for sending a talk to
+                somebody who'd rather read along than listen.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           6. YOUR OWN AI ACCOUNT
+           =================================================================== -->
+      <section class="section" id="ai">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow eyebrow-ai">Summaries</p>
+            <h2>The summaries need your own AI account.</h2>
+            <p class="lede">
+              This is the one thing Sift can't just do for you. It doesn't come
+              with AI and it doesn't sell you any. You connect an account of
+              your own, use one you already pay for, or run it free on your own
+              machine.
+            </p>
+          </header>
+
+          <ul class="ai-options">
+            <li>
+              <strong>An account of your own</strong> — you set up an account
+              with one of the AI companies. It's the pay-as-you-go kind, where
+              you put five or ten dollars in and it comes off as you use it.
+              Setting one up takes about five minutes, and a summary of a
+              normal-length video costs a few cents. You pay them directly; none
+              of it goes through me.
+            </li>
+            <li>
+              <strong>Or the Claude you already use</strong> — if you've got
+              Claude's command-line tool installed and signed in, Sift can hand
+              the work to that instead. Nothing extra to pay.
+            </li>
+            <li>
+              <strong>Or nothing at all</strong> — there's free AI you can run
+              on your own computer instead. It's a separate free program you
+              install once: Sift has a button that takes you straight to it, and
+              tells you the moment it's connected. It's slower than the paid
+              kind, and it wants a computer with a bit of muscle — if yours is
+              more than five or six years old, expect to wait.
+            </li>
+          </ul>
+
+          <p class="cost-line">
+            A long video costs more than a short one, and the smartest AI costs
+            more than the cheapest. That's the whole of it — it's between you
+            and them, and I don't take a cut.
+          </p>
+
+          <p class="microcopy">
+            If you connect a paid account, your account details are locked away
+            on your computer. Sift only ever uses them to talk to the one
+            company you picked, and never sends them anywhere else.
+          </p>
+
+          <!-- 6a. PROMPT LIBRARY -->
+          <div class="subsection" id="prompts">
+            <h3 class="subhead">Ask for whatever you actually want.</h3>
+            <div class="prose">
+              <p>
+                A summary is only one of the things you can ask for. Sift comes
+                with a handful of ready-made requests — chapter markers, title
+                ideas, a description, show notes, a blog post, a newsletter, the
+                bits worth clipping. A request is just an instruction written in
+                plain English, like “pull out the five best quotes.” You can
+                read every one of them, change the wording, or write your own.
+              </p>
+            </div>
+
+            <ul class="cards cards-3">
+              <li class="card">
+                <h4>Chapters that point at real moments</h4>
+                <p>
+                  Ask for chapters and the times come from what was actually
+                  said, not from a guess. Paste them straight under a video and
+                  they land where they should.
+                </p>
+              </li>
+              <li class="card">
+                <h4>Try a request before you keep it</h4>
+                <p>
+                  Settings has a scratch pad where you paste in some text and
+                  try your wording on it, so you can get the request right
+                  without making a mess of your library. Nothing you try there
+                  is saved.
+                </p>
+              </li>
+              <li class="card">
+                <h4>Send your requests to someone</h4>
+                <p>
+                  Save the whole set of requests to a file and email it to a
+                  friend, or load a set somebody sends you. If one of theirs is
+                  named the same as one of yours, it replaces yours — so rename
+                  anything you want to keep first.
+                </p>
+              </li>
+            </ul>
+
+            <!-- SHOT-DETAIL-SUMMARY -->
+            <figure class="shot" id="shot-detail-summary">
+              <div class="shot-chrome" aria-hidden="true">
+                <span class="corner-mark shot-chrome-mark"></span>
+                <span class="shot-chrome-name">Sift</span>
+                <span class="shot-chrome-controls"><i></i><i></i><i></i></span>
+              </div>
+              <div class="shot-media">
+                <picture>
+                  <source
+                    type="image/webp"
+                    srcset="
+                      assets/shots/gen/detail-summary-720.webp   720w,
+                      assets/shots/gen/detail-summary-1400.webp 1400w,
+                      assets/shots/gen/detail-summary-2368.webp 2368w
+                    "
+                    sizes="(max-width: 47.999rem) 1184px, (min-width: 79rem) 1184px, (min-width: 50rem) calc(100vw - 5rem), 92vw"
+                  />
+                  <img
+                    src="assets/shots/gen/detail-summary-1184.png"
+                    width="1184"
+                    height="740"
+                    loading="lazy"
+                    decoding="async"
+                    alt="A saved video in Sift with the video playing on one side and the summary it was given beside it — a couple of sentences, then the key points as bullets."
+                  />
+                </picture>
+              </div>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           7. THE QUEUE
+           =================================================================== -->
+      <section class="section section-no-rule" id="queue">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">In bulk</p>
+            <h2>Paste a stack of links and walk away.</h2>
+            <p class="lede">
+              Sift works through them one at a time — saving, writing down,
+              summarising — and keeps going without you. Pause it, shuffle
+              what's waiting, retry only the ones that went wrong. Close the app
+              halfway through and it carries on where it stopped.
+            </p>
+          </header>
+
+          <!-- SHOT-QUEUE -->
+          <figure class="shot" id="shot-queue">
+            <div class="shot-chrome" aria-hidden="true">
+              <span class="corner-mark shot-chrome-mark"></span>
+              <span class="shot-chrome-name">Sift</span>
+              <span class="shot-chrome-controls"><i></i><i></i><i></i></span>
+            </div>
+            <div class="shot-media">
+              <picture>
+                <source
+                  type="image/webp"
+                  srcset="
+                    assets/shots/gen/queue-720.webp   720w,
+                    assets/shots/gen/queue-1400.webp 1400w,
+                    assets/shots/gen/queue-2344.webp 2344w
+                  "
+                  sizes="(max-width: 47.999rem) 1184px, (min-width: 79rem) 1184px, (min-width: 50rem) calc(100vw - 5rem), 92vw"
+                />
+                <img
+                  src="assets/shots/gen/queue-1184.png"
+                  width="1184"
+                  height="740"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Sift working through a batch: four videos in a list — one finished, one flagged with a problem, one part-way through at 63 per cent, one still waiting — with buttons to pause, retry and reorder."
+                />
+              </picture>
+            </div>
+          </figure>
+
+          <p class="microcopy">
+            Video sites change how they work every few weeks, and that's what
+            stops most downloaders working. Sift quietly keeps itself current so
+            it carries on working. The app itself never updates without asking
+            you first, and there's a setting if you'd rather approve everything.
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           8. THE LIBRARY
+           =================================================================== -->
+      <section class="section" id="library">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Your library</p>
+            <h2>
+              One video is a document. <br class="br-lg" />A hundred is a
+              library.
+            </h2>
+            <p class="lede">
+              Everything you've saved lands in one place. The whole point of
+              that place is finding it again six months later.
+            </p>
+          </header>
+
+          <ul class="cards cards-3">
+            <li class="card">
+              <h3>Search everything anyone said</h3>
+              <p>
+                Not just titles. Type a phrase you half-remember hearing and the
+                video comes back, along with the line it came from.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Show me these — or hide these</h3>
+              <p>
+                Click two labels and you'll only see the videos that have both.
+                Right-click a label instead and everything with it disappears —
+                handy when you want everything except the cooking videos.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Narrow it down by who made it</h3>
+              <p>
+                Or by where it came from. The filters sit next to the search box
+                and apply to everything, not just the page you're looking at.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Click a line, jump to that moment</h3>
+              <p>
+                The words scroll along with the video while it plays, and any
+                line you click takes you straight there.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Two ways to look at it</h3>
+              <p>
+                Thumbnails when you want to see what things are, or a sortable
+                list when you want to see who made it, how long it is and when
+                you saved it, all lined up in columns.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Watch it somewhere else</h3>
+              <p>
+                Make a playlist out of whatever you're currently looking at and
+                open it in the media player or TV app you already use.
+              </p>
+            </li>
+          </ul>
+
+          <!-- One stack, not two matching rectangles: tiles is the whole window,
+               the table is cut to a band of rows because its toolbar is the same
+               pixels as the one directly above it. -->
+          <div class="shot-pair">
+            <!-- SHOT-LIBRARY-TILES -->
+            <figure class="shot" id="shot-library-tiles">
+              <div class="shot-chrome" aria-hidden="true">
+                <span class="corner-mark shot-chrome-mark"></span>
+                <span class="shot-chrome-name">Sift</span>
+                <span class="shot-chrome-controls"><i></i><i></i><i></i></span>
+              </div>
+              <div class="shot-media">
+                <picture>
+                  <source
+                    type="image/webp"
+                    srcset="
+                      assets/shots/gen/library-tiles-720.webp   720w,
+                      assets/shots/gen/library-tiles-1400.webp 1400w,
+                      assets/shots/gen/library-tiles-2368.webp 2368w
+                    "
+                    sizes="(max-width: 47.999rem) 1184px, (min-width: 79rem) 1184px, (min-width: 50rem) calc(100vw - 5rem), 92vw"
+                  />
+                  <img
+                    src="assets/shots/gen/library-tiles-1184.png"
+                    width="1184"
+                    height="740"
+                    loading="lazy"
+                    decoding="async"
+                    alt="Sift's library as thumbnails: rows of saved videos with their titles, who made them and their labels, with a search box and filters above."
+                  />
+                </picture>
+              </div>
+            </figure>
+            <!-- SHOT-LIBRARY-TABLE -->
+            <figure class="shot shot-pair-band" id="shot-library-table">
+              <div class="shot-media">
+                <picture>
+                  <source
+                    type="image/webp"
+                    srcset="
+                      assets/shots/gen/library-table-band-660.webp   660w,
+                      assets/shots/gen/library-table-band-1240.webp 1240w,
+                      assets/shots/gen/library-table-band-2060.webp 2060w
+                    "
+                    sizes="(max-width: 47.999rem) 1042px, (min-width: 79rem) 1042px, (min-width: 56rem) calc((100vw - 5rem) * 0.88), (min-width: 50rem) calc(100vw - 5rem), 92vw"
+                  />
+                  <img
+                    src="assets/shots/gen/library-table-band-1042.png"
+                    width="1042"
+                    height="521"
+                    loading="lazy"
+                    decoding="async"
+                    alt="The same library as a sortable list, with who made each video, how long it is and when it was saved lined up in columns."
+                  />
+                </picture>
+              </div>
+            </figure>
+          </div>
+
+          <!-- SHOT-DETAIL-TRANSCRIPT -->
+          <figure class="shot" id="shot-detail-transcript">
+            <div class="shot-chrome" aria-hidden="true">
+              <span class="corner-mark shot-chrome-mark"></span>
+              <span class="shot-chrome-name">Sift</span>
+              <span class="shot-chrome-controls"><i></i><i></i><i></i></span>
+            </div>
+            <div class="shot-media">
+              <picture>
+                <source
+                  type="image/webp"
+                  srcset="
+                    assets/shots/gen/detail-transcript-720.webp   720w,
+                    assets/shots/gen/detail-transcript-1400.webp 1400w,
+                    assets/shots/gen/detail-transcript-2368.webp 2368w
+                  "
+                  sizes="(max-width: 47.999rem) 1184px, (min-width: 79rem) 1184px, (min-width: 50rem) calc(100vw - 5rem), 92vw"
+                />
+                <img
+                  src="assets/shots/gen/detail-transcript-1184.png"
+                  width="1184"
+                  height="740"
+                  loading="lazy"
+                  decoding="async"
+                  alt="A saved video playing on one side, with everything said in it written down beside it and the line being spoken right now lit up."
+                />
+              </picture>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           9. CHANNELS AND SUBSCRIPTIONS
+           =================================================================== -->
+      <section class="section section-tight section-no-rule" id="channels">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Channels</p>
+            <h2>Track a channel, not just a link.</h2>
+            <p class="lede">
+              Follow a channel and Sift keeps count of what's new since you last
+              looked. Browse its videos, shorts and live streams, tick the ones
+              you want, and send them all off at once. And if you sign in to
+              YouTube inside Sift, it can pull in the channels you already
+              subscribe to, so you don't type them in
+              one&nbsp;at&nbsp;a&nbsp;time.
+            </p>
+          </header>
+
+          <!-- SHOT-CHANNELS -->
+          <figure class="shot" id="shot-channels">
+            <div class="shot-chrome" aria-hidden="true">
+              <span class="corner-mark shot-chrome-mark"></span>
+              <span class="shot-chrome-name">Sift</span>
+              <span class="shot-chrome-controls"><i></i><i></i><i></i></span>
+            </div>
+            <div class="shot-media">
+              <picture>
+                <source
+                  type="image/webp"
+                  srcset="
+                    assets/shots/gen/channels-720.webp   720w,
+                    assets/shots/gen/channels-1400.webp 1400w,
+                    assets/shots/gen/channels-2344.webp 2344w
+                  "
+                  sizes="(max-width: 47.999rem) 1184px, (min-width: 79rem) 1184px, (min-width: 50rem) calc(100vw - 5rem), 92vw"
+                />
+                <img
+                  src="assets/shots/gen/channels-1184.png"
+                  width="1184"
+                  height="740"
+                  loading="lazy"
+                  decoding="async"
+                  alt="Sift following seven channels, each with its picture, name and video count, and a badge saying how much is new since the last look."
+                />
+              </picture>
+            </div>
+          </figure>
+
+          <ul class="cards cards-2">
+            <li class="card">
+              <h3>It flags the ones that took off</h3>
+              <p>
+                A video that did much better than that channel's usual gets a
+                small badge showing how much better. It's a rough signal, not a
+                measurement — treat it as “worth a look”.
+              </p>
+            </li>
+            <li class="card">
+              <h3>Signing in</h3>
+              <p>
+                Members-only and age-checked videos need you to be logged in.
+                Sift opens a browser window of its own, you sign in the normal
+                way, and that stays on your computer. If it goes stale later
+                Sift says so, rather than quietly failing.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           10. WHERE YOUR FILES ACTUALLY ARE
+           =================================================================== -->
+      <section class="section section-tight" id="files">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Your files</p>
+            <h2>Ordinary files, in a folder you picked.</h2>
+            <p class="lede">
+              Videos, transcripts and summaries are saved into a Sift folder
+              inside your Downloads, and you can move that anywhere you like.
+              They're ordinary files — the video plays in whatever you normally
+              use, and the transcript and the summary open in Notepad, Word, or
+              anything else, whether Sift is running or not. Every video has a
+              list of the files Sift created for it, one
+              click&nbsp;to&nbsp;open&nbsp;each.
+            </p>
+          </header>
+
+          <div class="two-col">
+            <div class="col">
+              <h3 class="subhead subhead-sm">
+                What never leaves your computer
+              </h3>
+              <ul class="marked-list marked-list-keep">
+                <li>Your videos. The ones you saved and the ones you had.</li>
+                <li>Every transcript, and every summary.</li>
+                <li>
+                  Your AI account details, locked away where only Sift
+                  can&nbsp;read&nbsp;them.
+                </li>
+                <li>
+                  Anything you signed into. That goes to the site you signed
+                  into and nowhere else.
+                </li>
+                <li>
+                  Everything you searched, labelled or filtered. Every video you
+                  looked at and didn't save.
+                </li>
+              </ul>
+              <p class="list-rider">
+                One exception, and it's the obvious one: when you ask for a
+                summary, the words get sent to whichever AI service you picked.
+                Pick the free one that runs on your own computer and even that
+                stops.
+              </p>
+            </div>
+
+            <div class="col">
+              <h3 class="subhead subhead-sm">What Sift connects to</h3>
+              <ul class="marked-list marked-list-out">
+                <li>The site you're saving the video from.</li>
+                <li>
+                  A check for a new version when it starts, plus the quiet
+                  background fixes that keep Sift working with video sites.
+                </li>
+                <li>Thumbnails, fetched once and then kept.</li>
+                <li>The AI account you chose, if you chose one.</li>
+                <li>
+                  The one-off download that lets Sift listen to a video, the
+                  first time you need it.
+                </li>
+              </ul>
+              <p class="list-rider">
+                None of it is reported back to me — there's no account and no
+                analytics here. The site you're saving from sees the request,
+                the way it would in a browser, and the AI service you picked
+                sees the words you deliberately send it.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           11. THERE IS NO BUSINESS MODEL HERE
+           =================================================================== -->
+      <section class="section" id="price">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Price</p>
+            <h2>It's free. There's no catch and no plan to add one.</h2>
+            <p class="lede">
+              No subscription, no account, no trial, no upsell. The app collects
+              nothing about you — no analytics, no tracking, no crash reports.
+              There's nothing to sign up for and nothing to hand over. I'm not
+              building a business on&nbsp;this.
+            </p>
+          </header>
+
+          <ul class="stat-row">
+            <li class="stat">
+              <span class="stat-figure">$0</span>
+              <span class="stat-label"
+                >for Sift, permanently. Free to use, and the code is public if
+                you want to check it.</span
+              >
+            </li>
+            <li class="stat">
+              <span class="stat-figure">A few cents</span>
+              <span class="stat-label"
+                >for a summary, if you use a paid AI account. Paid to them, not
+                to me.</span
+              >
+            </li>
+            <li class="stat">
+              <span class="stat-figure">$0</span>
+              <span class="stat-label"
+                >for a summary, if you run the free AI on your own computer —
+                or use a Claude subscription you already pay for.</span
+              >
+            </li>
+          </ul>
+
+          <div class="subsection">
+            <h3 class="subhead">The obvious objection</h3>
+            <div class="prose">
+              <p>
+                One person, no money coming in — so what happens in eighteen
+                months? Fair question. Two things make it survivable. Sift keeps
+                up with the video sites on its own, so saving videos keeps
+                working whether or not I put out another release. And everything
+                Sift makes is an ordinary file in a folder you chose — so if I
+                stopped tomorrow, you'd lose new features and nothing else. The
+                code is public and anyone can carry it on.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           12. WHO MADE THIS
+           =================================================================== -->
+      <section class="section section-tight" id="author">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Who made it</p>
+            <h2>One person, and still working on it.</h2>
+          </header>
+
+          <div class="author-grid">
+            <div class="author-col">
+              <div class="prose">
+                <p>
+                  It's one person, and it's still moving. The first release was
+                  16 July 2026, and it's been updated steadily ever since —
+                  every one listed with its date and what changed, so you can
+                  see for yourself whether this is a thing that's being looked
+                  after or a thing that was posted once and abandoned.
+                </p>
+                <p>
+                  Windows today. Linux is coming. Mac only if enough people want
+                  one — there's no point building it for nobody.
+                </p>
+              </div>
+
+              <p class="author-link">
+                <a href="https://dawid.ai">Dawid Jóźwiak →</a>
+              </p>
+            </div>
+
+            <figure class="release-log">
+              <figcaption class="release-log-head">
+                <span data-release-count>Twenty-four</span> releases since
+                <span data-release-first>16 July 2026</span>
+              </figcaption>
+              <ol class="release-list" data-release-list>
+                <li>
+                  <span class="rel-d">21 Aug 2026</span
+                  ><span class="rel-n">real channel counts, clickable thumbnails</span>
+                </li>
+                <li>
+                  <span class="rel-d">20 Aug 2026</span
+                  ><span class="rel-n">readable update notes</span>
+                </li>
+                <li>
+                  <span class="rel-d">19 Aug 2026</span
+                  ><span class="rel-n">search that finds things</span>
+                </li>
+                <li>
+                  <span class="rel-d">17 Aug 2026</span
+                  ><span class="rel-n">a new look, everywhere</span>
+                </li>
+                <li>
+                  <span class="rel-d">16 Aug 2026</span
+                  ><span class="rel-n">files you already have</span>
+                </li>
+              </ol>
+              <p class="release-log-more">
+                <a
+                  href="https://github.com/dawid-ai/sift/blob/master/UPDATES.md"
+                  >Every version, dated →</a
+                >
+              </p>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           13. BEFORE YOU INSTALL
+           =================================================================== -->
+      <section class="section" id="install">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Fine print</p>
+            <h2>Six things to know first.</h2>
+          </header>
+
+          <ol class="install-list">
+            <li>
+              <h3>Windows today.</h3>
+              <p>
+                That's the only version there is right now. Linux is coming. Mac
+                only if enough people ask for one. So if you're reading this on
+                a Mac there's nothing to install today — the rest of the page
+                still tells you what it does, and there's a place at the bottom
+                to say you want one.
+              </p>
+            </li>
+            <li>
+              <h3>Windows will warn you the first time.</h3>
+              <p>
+                It'll say it doesn't recognise the publisher. That's because I
+                haven't paid to have it signed, which costs money I'm not
+                spending on a free app. Click
+                <strong>More info</strong>, then <strong>Run anyway</strong>.
+                After that Sift offers you its own updates — it asks every time
+                and never installs one behind your back — so you shouldn't see
+                that warning again.
+              </p>
+            </li>
+            <li>
+              <h3>You don't have to take my word for it.</h3>
+              <p>
+                The code is public. Anyone who wants to can read exactly what's
+                in it, including someone you trust more than me.
+              </p>
+            </li>
+            <li>
+              <h3>One big download, once.</h3>
+              <p>
+                The first time you ask for the words on a video that has no
+                captions, Sift downloads about half a gigabyte, one time. That's
+                what lets it listen to a video and write down what's said
+                without sending the audio anywhere. It never downloads it again,
+                and after that the listening works with no internet at all.
+              </p>
+            </li>
+            <li>
+              <h3>It's new.</h3>
+              <p>
+                Sift is about a month old. It does what this page says today,
+                but it hasn't been hammered on by thousands of people yet.
+                Everything it makes is an ordinary file in a folder you chose,
+                which is the main reason that matters less than it might.
+              </p>
+            </li>
+            <li>
+              <h3>What you save is your business.</h3>
+              <p>
+                Sift does what you point it at and takes no view on what you
+                should point it at. What's allowed varies by site and by what
+                you do with the result, and that part is on you.
+              </p>
+            </li>
+          </ol>
+
+          <p class="after-link"><a href="#faq">More questions →</a></p>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           14. FAQ
+           =================================================================== -->
+      <section class="section" id="faq">
+        <div class="wrap">
+          <header class="section-head">
+            <p class="eyebrow">Questions</p>
+            <h2>Questions people actually ask.</h2>
+          </header>
+
+          <div class="faq">
+            <details open>
+              <summary>Is it really free?</summary>
+              <div class="faq-body">
+                <p>
+                  Yes. No account, no trial, no paid version waiting behind it.
+                  The only thing you might pay for is an AI account for the
+                  summaries, and that money goes to them, not to me — and
+                  there's a free option that runs on your own computer instead.
+                </p>
+              </div>
+            </details>
+
+            <details>
+              <summary>How long does it take?</summary>
+              <div class="faq-body">
+                <p>
+                  Saving a video takes about as long as your connection needs.
+                  If the video already has captions, the words are there in
+                  seconds. If it doesn't, your computer has to listen to the
+                  whole thing — ten or fifteen minutes for an hour of talking on
+                  a fast desktop, and I'd expect roughly half an hour to
+                  forty-five minutes on a laptop, though I haven't timed one.
+                  You can line up a batch and go and do something else.
+                </p>
+              </div>
+            </details>
+
+            <details>
+              <summary>Where do my files go?</summary>
+              <div class="faq-body">
+                <p>
+                  Into a Sift folder inside your Downloads, and you can move
+                  that anywhere. The video, the transcript and the summary are
+                  ordinary files that open in whatever you already use. The
+                  slide pictures are the exception — they live in Sift's own
+                  folder rather than sitting next to the video, and there's a
+                  button on every video that opens that folder.
+                </p>
+              </div>
+            </details>
+
+            <details>
+              <summary>Do I have to give you anything?</summary>
+              <div class="faq-body">
+                <p>
+                  No. There's no account and no sign-up, and nothing in the app
+                  reports anything about you back to me. It checks my releases
+                  page for a new version, and that's the whole of it. Your
+                  videos, your transcripts and your sign-ins stay on your
+                  computer. The one thing that ever
+                  leaves is the text of a video you deliberately send off for a
+                  summary, and that goes to whichever AI service you picked.
+                  This website has no form on it at all.
+                </p>
+              </div>
+            </details>
+
+            <details>
+              <summary>Can I do a whole channel at once?</summary>
+              <div class="faq-body">
+                <p>
+                  Yes. Follow a channel and you can browse everything on it,
+                  tick the ones you want, and send the lot off in one go. A
+                  playlist link on its own only saves the one video you pasted.
+                </p>
+              </div>
+            </details>
+
+            <details>
+              <summary>Mac? Linux?</summary>
+              <div class="faq-body">
+                <p>
+                  Linux is coming. Mac only if enough people want one — it's
+                  real work and there's no point doing it for nobody. If you
+                  want one,
+                  <a href="https://github.com/dawid-ai/sift/issues"
+                    >say so on the project page</a
+                  >
+                  — it's a free sign-up and it takes a minute — or just
+                  <a
+                    href="mailto:jozwiakdawid@gmail.com?subject=Sift%20for%20Mac"
+                    >email me</a
+                  >. That's how I'll count, and it's the only counting there is.
+                </p>
+              </div>
+            </details>
+
+            <details>
+              <summary>What happens when a site changes and breaks it?</summary>
+              <div class="faq-body">
+                <p>
+                  YouTube and the rest change how they work every few weeks, and
+                  that's what makes most download tools quietly stop working.
+                  Sift fixes itself for those changes on its own, without
+                  waiting for a whole new version of the app, and you don't have
+                  to install anything for it. If you'd rather approve each fix
+                  yourself, there's a setting.
+                </p>
+              </div>
+            </details>
+
+            <details>
+              <summary>Is it legal to save this stuff?</summary>
+              <div class="faq-body">
+                <p>
+                  Sift runs on your computer and does what you tell it to. It
+                  doesn't decide what's alright to save — that's on you, and
+                  this isn't legal advice. What's allowed varies by site and by
+                  what you plan to do with the result.
+                </p>
+              </div>
+            </details>
+          </div>
+
+          <p class="after-link">
+            <a href="https://github.com/dawid-ai/sift/blob/master/docs/FAQ.md"
+              >More answers, in more detail →</a
+            >
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           15. DOWNLOAD
+           =================================================================== -->
+      <section class="section section-download" id="download">
+        <div class="wrap wrap-narrow">
+          <h2 class="download-title">Get Sift</h2>
+
+          <a
+            class="btn btn-primary btn-lg"
+            href="https://github.com/dawid-ai/sift/releases/latest/download/Sift-Setup.exe"
+            >Download for Windows — free</a
+          >
+
+          <p class="microcopy download-microcopy">
+            Updated <span data-release-date>21 August 2026</span> — always the
+            latest one. First time you run it, Windows will warn you it doesn't
+            recognise the publisher. That's because I haven't paid to have it
+            signed. Click “More info”, then “Run anyway”.
+          </p>
+
+          <ul class="platform-status">
+            <li><strong>Linux</strong> — coming soon.</li>
+            <li>
+              <strong>Mac</strong> — not built yet. If enough people want it,
+              I'll build it.
+            </li>
+          </ul>
+
+          <div id="mac-signup">
+            <div class="signup">
+              <h3 class="signup-head">Want it on a Mac?</h3>
+              <p class="signup-lede">
+                There's no Mac version yet. Leave your name and I'll email you
+                once — the day it exists. If hardly anyone does, that tells me
+                it isn't worth building, which is just as useful to know.
+              </p>
+
+              <p class="signup-action">
+                <!-- The href is the real Tally form, so this works with JS off.
+                     With JS on, main.js intercepts the click, loads Tally's
+                     embed script on demand and opens it as a popup instead.
+                     Deliberately NOT loaded up front: this page makes zero
+                     third-party requests until someone actually asks for the
+                     form. -->
+                <a
+                  class="btn btn-quiet"
+                  id="mac-tally"
+                  href="https://tally.so/r/BzJp5e"
+                  data-tally-open="BzJp5e"
+                  data-tally-emoji-text="&#128075;"
+                  data-tally-emoji-animation="wave"
+                  data-tally-layout="modal"
+                  data-tally-width="460"
+                  data-tally-overlay="1"
+                  >Tell me when it's ready &#8594;</a
+                >
+              </p>
+
+              <p class="signup-fineprint">
+                One email, when the Mac version ships. Nothing else, ever. The
+                form itself is handled by Tally — it's the only thing on this
+                page that talks to anybody else, and only once you open it.
+              </p>
+            </div>
+          </div>
+
+          <!-- The closing line sits in the ASK column, above the links, so the
+               two columns of the band end at roughly the same depth and the
+               full-width rule above the links stays the last beat. -->
+          <p class="microcopy download-closing">
+            Free, forever. No account, and nothing to sign up for to use it —
+            the Mac list above is the only thing on this page that asks you for
+            anything, and it's&nbsp;entirely&nbsp;optional.
+          </p>
+
+          <ul class="link-row">
+            <li>
+              <a href="https://github.com/dawid-ai/sift/releases"
+                >Every version →</a
+              >
+            </li>
+            <li>
+              <a href="https://github.com/dawid-ai/sift">The code →</a>
+            </li>
+            <li>
+              <a href="https://github.com/dawid-ai/sift/blob/master/UPDATES.md"
+                >What's changed →</a
+              >
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================================================================
+         17. FOOTER
+         =================================================================== -->
+    <footer class="footer" id="footer">
+      <div class="wrap">
+        <div class="footer-cols">
+          <div class="footer-col">
+            <h2 class="footer-head">Sift</h2>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/dawid-ai/sift/releases/latest/download/Sift-Setup.exe"
+                  >Download for Windows — free</a
+                >
+              </li>
+              <li>
+                <a href="https://github.com/dawid-ai/sift/releases"
+                  >Every version</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://github.com/dawid-ai/sift/blob/master/UPDATES.md"
+                  >What's changed</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h2 class="footer-head">The code</h2>
+            <ul>
+              <li><a href="https://github.com/dawid-ai/sift">GitHub</a></li>
+              <li>
+                <a
+                  href="https://github.com/dawid-ai/sift/blob/master/docs/FAQ.md"
+                  >FAQ</a
+                >
+              </li>
+              <li>
+                <a
+                  href="https://github.com/dawid-ai/sift/blob/master/CONTRIBUTING.md"
+                  >Contributing</a
+                >
+              </li>
+              <li>
+                <a href="https://github.com/dawid-ai/sift/blob/master/LICENSE"
+                  >MIT licence</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h2 class="footer-head">Author</h2>
+            <ul>
+              <li><a href="https://dawid.ai">Dawid Jóźwiak</a></li>
+              <li class="footer-plain">dawid.ai</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-base">
+          <p class="footer-closing">
+            Sift is made by Dawid Jóźwiak, on his own. The app runs on your
+            computer and collects nothing about you: no accounts, no analytics,
+            no crash reports. Neither does this page.
+          </p>
+          <p class="footer-copy">
+            © 2026 Dawid Jóźwiak. Free to use, and the code is public —
+            <a href="https://github.com/dawid-ai/sift/blob/master/LICENSE"
+              >MIT licence</a
+            >.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="main.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 216" width="384" height="216" role="presentation">
+<rect width="384" height="216" fill="#F4F1EC"/>
+<g font-family="Helvetica, Arial, sans-serif">
+<text x="26" y="34" font-size="17" font-weight="700" fill="#1D1916">Three dates on a packet</text>
+<line x1="26" y1="46" x2="358" y2="46" stroke="#D8D2C9" stroke-width="1"/>
+<rect x="26" y="66" width="100" height="72" rx="4" fill="#EAE4DA" stroke="#D8D2C9"/>
+<text x="76" y="96" font-size="10.5" font-weight="700" text-anchor="middle" fill="#4A443E">BEST BEFORE</text>
+<text x="76" y="114" font-size="9" text-anchor="middle" fill="#8A8078">about quality</text>
+<rect x="142" y="66" width="100" height="72" rx="4" fill="#F6E4D8" stroke="#B4643A" stroke-width="1.6"/>
+<text x="192" y="96" font-size="10.5" font-weight="700" text-anchor="middle" fill="#B4643A">USE BY</text>
+<text x="192" y="114" font-size="9" text-anchor="middle" fill="#8A8078">about safety</text>
+<rect x="258" y="66" width="100" height="72" rx="4" fill="#EAE4DA" stroke="#D8D2C9"/>
+<text x="308" y="96" font-size="10.5" font-weight="700" text-anchor="middle" fill="#4A443E">DISPLAY UNTIL</text>
+<text x="308" y="114" font-size="9" text-anchor="middle" fill="#8A8078">for the shop</text>
+<text x="26" y="168" font-size="9.5" fill="#8A8078">Only the middle one is telling you anything about you.</text>
+<text x="26" y="200" font-size="8.5" letter-spacing="0.12em" fill="#8A8078">THE LECTURE ROOM</text>
+</g>
+</svg>

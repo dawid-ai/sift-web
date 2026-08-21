@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 216" width="384" height="216" role="presentation">
+<rect width="384" height="216" fill="#F4F1EC"/>
+<g font-family="Helvetica, Arial, sans-serif">
+<text x="26" y="34" font-size="17" font-weight="700" fill="#1D1916">Three things to take away</text>
+<line x1="26" y1="46" x2="358" y2="46" stroke="#D8D2C9" stroke-width="1"/>
+<text x="26" y="84" font-size="13" font-weight="700" fill="#1D1916">Only &#8220;use by&#8221; is about safety.</text>
+<text x="26" y="118" font-size="13" font-weight="700" fill="#1D1916">Turn the fridge down.</text>
+<text x="26" y="152" font-size="13" font-weight="700" fill="#1D1916">Buy for three days, not nine.</text>
+<line x1="26" y1="166" x2="150" y2="166" stroke="#B4643A" stroke-width="3"/>
+<text x="26" y="200" font-size="8.5" letter-spacing="0.12em" fill="#8A8078">THE LECTURE ROOM</text>
+</g>
+</svg>

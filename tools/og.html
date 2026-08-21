@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Source for web/assets/og.png. Rendered to a 1200x630 PNG by
+         web/tools/make-og.cjs. Not shipped and never linked from the site.
+
+         Deck section 19: "SHOT-SLIDES, cropped to 1200x630 with the headline
+         overlaid." The headline is the H1, verbatim. Nothing here is invented
+         copy, and the colour law is the same as the page's: coral appears only
+         on the shot's own CTA inside the screenshot, never on this card. -->
+    <link rel="stylesheet" href="../assets/tokens.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        font-family: var(--font-sans);
+        font-synthesis-weight: none;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .card {
+        position: relative;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background-color: hsl(var(--background));
+      }
+
+      /* The shot sits on the right, framed on the slide strip — which is what
+         the OG alt text says is in the picture. detail-slides is now a 3.53
+         BAND (see web/tools/derive-shots.cjs): the whole 1400x397 strip scaled
+         into this box would put each slide at ~130px wide and unreadable, so
+         this is a detail of the same capture, not a different one — source rect
+         x 137..693, y 14..384 of detail-slides-1400.webp, at 0.953, which is
+         the "N of N selected for the document" row and the first two slides
+         with their timestamps. */
+      .shot {
+        position: absolute;
+        top: 138px;
+        left: 640px;
+        width: 530px;
+        height: 353px;
+        border: 1px solid hsl(var(--border));
+        border-radius: var(--r-card);
+        overflow: hidden;
+        background: hsl(var(--surface));
+        box-shadow:
+          inset 0 1px 0 0 hsl(0 0% 100% / 0.06),
+          0 40px 80px -30px hsl(20 30% 1% / 0.95);
+      }
+      .shot img {
+        display: block;
+        width: 1334px; /* 1400 * 0.953 */
+        height: auto;
+        margin-left: -131px; /* 137 * 0.953 */
+        margin-top: -13px; /*  14 * 0.953 */
+        max-width: none;
+      }
+
+      /* The same warm lamp the page's hero uses, so the card and the site are
+         lit by one light. */
+      .lamp {
+        position: absolute;
+        inset: -20% -10% -20% 30%;
+        background:
+          radial-gradient(
+            54% 50% at 55% 44%,
+            hsl(22 80% 56% / 0.2) 0%,
+            hsl(20 68% 48% / 0.08) 46%,
+            transparent 74%
+          ),
+          radial-gradient(
+            60% 50% at 40% 100%,
+            hsl(16 62% 50% / 0.07) 0%,
+            transparent 70%
+          );
+      }
+
+      /* Scrim: the headline sits over the left third, which the shot's own
+         panel edges reach into. This keeps the text on a flat ground so the
+         contrast is the token ladder's, not the screenshot's. */
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          100deg,
+          hsl(24 12% 4%) 0%,
+          hsl(24 12% 4%) 38%,
+          hsl(24 12% 4% / 0.9) 46%,
+          hsl(24 12% 4% / 0.35) 56%,
+          transparent 66%
+        );
+      }
+
+      .copy {
+        position: absolute;
+        left: 72px;
+        top: 96px;
+        width: 560px;
+      }
+
+      .mark {
+        display: inline-block;
+        font-size: 26px;
+        font-weight: 660;
+        letter-spacing: -0.02em;
+        color: hsl(var(--foreground));
+        margin-bottom: 44px;
+      }
+      .mark::before,
+      .mark::after {
+        --mark-size: 9px;
+        --mark-inset: -7px;
+        --mark-thickness: 2px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 62px;
+        font-weight: 680;
+        line-height: 1.04;
+        letter-spacing: -0.035em;
+        color: hsl(var(--foreground));
+      }
+
+      .fine {
+        margin: 40px 0 0;
+        font-size: 21px;
+        line-height: 1.5;
+        color: hsl(var(--muted-foreground));
+      }
+
+      .rule {
+        margin-top: 34px;
+        width: 88px;
+        height: 2px;
+        background: hsl(var(--accent-muted));
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="lamp"></div>
+      <div class="shot">
+        <img src="../assets/shots/gen/detail-slides-1400.webp" alt="" />
+      </div>
+      <div class="scrim"></div>
+      <div class="copy">
+        <span class="mark corner-mark">Sift</span>
+        <!-- The H1, verbatim. The card carries the headline overlaid and
+             nothing else, so nothing else is written here — a strapline
+             invented for the card would be copy the deck never approved. -->
+        <h1>Save the video. Keep the words.</h1>
+        <div class="rule"></div>
+      </div>
+    </div>
+  </body>
+</html>

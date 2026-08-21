@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 216" width="384" height="216" role="presentation">
+<rect width="384" height="216" fill="#F4F1EC"/>
+<g font-family="Helvetica, Arial, sans-serif">
+<text x="26" y="34" font-size="17" font-weight="700" fill="#1D1916">Six weeks later</text>
+<line x1="26" y1="46" x2="358" y2="46" stroke="#D8D2C9" stroke-width="1"/>
+<line x1="40" y1="158" x2="352" y2="158" stroke="#D8D2C9" stroke-width="1"/>
+<rect x="70" y="66" width="76" height="92" fill="#C79A79"/>
+<text x="108" y="58" font-size="11" text-anchor="middle" fill="#4A443E">&#163;41 a week</text>
+<text x="108" y="176" font-size="9" text-anchor="middle" fill="#8A8078">binned before</text>
+<rect x="238" y="122" width="76" height="36" fill="#B4643A"/>
+<text x="276" y="114" font-size="11" text-anchor="middle" fill="#B4643A">&#163;16 a week</text>
+<text x="276" y="176" font-size="9" text-anchor="middle" fill="#8A8078">binned after</text>
+<text x="26" y="200" font-size="8.5" letter-spacing="0.12em" fill="#8A8078">THE LECTURE ROOM</text>
+</g>
+</svg>
