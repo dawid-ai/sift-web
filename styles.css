@@ -1089,6 +1089,27 @@ b {
    above it, which is the point. Radial gradients are soft by construction, so
    no filter: blur() is involved. */
 
+/* The hero is the one section that bleeds past the right edge, so it is the one
+   section that has to clip. `--bleed-right` is measured in `100vw`, which INCLUDES
+   the vertical scrollbar, while the layout it is subtracted from is only as wide as
+   the content box — so the stage lands half a scrollbar (~8px) beyond the viewport
+   and the page can be dragged sideways by exactly that much.
+
+   Clipped HERE and not on <html>: `overflow-x` on the root makes the root a clip
+   context, which takes the sticky nav out of the viewport's scrollport and drops it
+   off the top of the page. `hidden` on <body> does not fix it either — it propagates
+   to the viewport as a scroll container, so the 8px stays scrollable with the
+   scrollbar merely suppressed, which is what draws a horizontal scrollbar on setups
+   that render classic ones.
+
+   `clip` and not `hidden` on the section, and `overflow-y` stated: `hidden` would
+   coerce the other axis to `auto` and cut the lamp in ::before, which is supposed to
+   spill above and below. `clip` is the only value that lets one axis stay visible. */
+#hero {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
 .hero-stage {
   position: relative;
   margin-top: clamp(2.5rem, 6vw, 4.5rem);
