@@ -43,6 +43,7 @@ const SHOWN = 5;
    update was, not what the changelog calls it. Lower case on purpose: the row
    is a caption, not a heading, and Title Case here reads as a product name. */
 const NOTES = {
+  "v0.7.1": "slide region and clip selection fixes",
   "v0.7.0": "editing, clips, and automation",
   "v0.6.2": "real channel counts, clickable thumbnails",
   "v0.6.1": "readable update notes",
